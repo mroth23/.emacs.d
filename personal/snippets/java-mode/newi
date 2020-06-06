@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: newi
+# key: ni
+# --
+${1:Type} ${2:var} = new $1(${3:});$0

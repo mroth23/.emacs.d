@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: buffer-file-name
+# key: .f
+# --
+`(file-name-base (or (buffer-file-name)(buffer-name)))`$0

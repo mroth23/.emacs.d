@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: swjtry
+# key: st
+# --
+try
+{
+    ${1:}
+}
+catch (Throwable t)
+{
+    throw new SwjException("`(file-name-base (or (buffer-file-name)(buffer-name)))`.`(semantic-tag-name (semantic-current-tag))`", t);
+}$0
