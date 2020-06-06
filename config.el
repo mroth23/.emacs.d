@@ -1,3 +1,31 @@
+;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
+  (defun my/tangle-dotfiles ()
+    "If the current file is this file, the code blocks are tangled"
+    (when (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org"))
+      (org-babel-tangle nil "~/.emacs.d/config.el")
+      (byte-compile-file "~/.emacs.d/config.el")))
+
+  (add-hook 'after-save-hook #'my/tangle-dotfiles)
+
+  ;; Snippet for writing elisp like everywhere around this file.
+
+  (use-package org
+    :hook
+    (org-mode . org-indent-mode)
+    :config
+    (add-to-list 'org-structure-template-alist
+                 '("el" . "src emacs-lisp"))
+    (require 'org-tempo)
+    (setq org-src-fontify-natively t
+          org-src-tab-acts-natively t
+          org-confirm-babel-evaluate nil
+          org-export-with-smart-quotes t))
+
+;; Convert a buffer and associated decorations to HTML.
+
+  (use-package htmlize
+    :ensure t)
+
 (when (eq system-type 'darwin) ;; mac specific settings
   (setq mac-option-modifier 'meta)
   ;; (setq mac-right-option-modifier 'none)
@@ -128,6 +156,7 @@
   (add-to-list 'dashboard-items '(agenda) t))
 
 (use-package projectile
+  :demand t
   :init
   (setq projectile-keymap-prefix (kbd "C-c p"))
   :config
@@ -569,6 +598,8 @@
   :config
   (helm-mode 1)
   ;; Fuzzy matching everywhere
+  (setq helm-completion-style 'emacs
+        completion-styles     '(flex))
   (setq
    ;; Autoresize helm buffer depending on match count
    helm-M-x-fuzzy-match t
@@ -584,11 +615,10 @@
    helm-ff-transformer-show-only-basename nil
    helm-imenu-fuzzy-match t
    helm-locate-fuzzy-match nil
-   helm-mode-fuzzy-match t
    helm-move-to-line-cycle-in-source t
    helm-recentf-fuzzy-match t
    helm-semantic-fuzzy-match t
-   helm-split-window-in-side-p t)
+   helm-split-window-inside-p t)
   (helm-autoresize-mode 1))
 
 (use-package helm-projectile
@@ -938,6 +968,19 @@ The point should be inside the method to generate docs for"
 
 (use-package flycheck)
 
+(define-key flycheck-mode-map flycheck-keymap-prefix nil)
+(setq flycheck-keymap-prefix (kbd "C-c f"))
+(define-key flycheck-mode-map flycheck-keymap-prefix
+  flycheck-command-map)
+
+(setq flycheck-checker-error-threshold 5000)
+
+(defun flycheck-display-error-messages-unless-error-buffer (errors)
+  (unless (get-buffer-window flycheck-error-list-buffer)
+    (flycheck-display-error-messages errors)))
+
+(setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-buffer)
+
 (use-package helm-lsp
   :ensure t
   :commands helm-lsp-workspace-symbol)
@@ -954,7 +997,7 @@ The point should be inside the method to generate docs for"
         ("C-c l j" . moo-javadoc)
         ("C-c l o" . lsp-organize-imports)
         ("C-c l r" . lsp-rename)
-        ("C-c l x" . lsp-restart-workspace)
+        ("C-c l x" . lsp-workspace-restart)
         ("C-c l d" . lsp-describe-thing-at-point)
         ("C-c l h" . lsp-treemacs-call-hierarchy))
   :init
@@ -1029,7 +1072,7 @@ The point should be inside the method to generate docs for"
   :hook ((c-mode c++-mode objc-mode) .
          (lambda () (require 'ccls) (lsp))))
 (setq ccls-executable "c:/prj/ccls/Release/ccls.exe")
-(setq lsp-prefer-flymake nil)
+(setq lsp-diagnostic-package :auto)
 (setq-default flycheck-disabled-checkers '(c/c++-clang c/c++-cppcheck c/c++-gcc))
 (setq ccls-args '("--log-file=c:/prj/ccls/ccls.log"))
 
@@ -1085,19 +1128,6 @@ The point should be inside the method to generate docs for"
   :hook
   (python-mode . yapf-mode))
 
-(setq org-src-fontify-natively t
-      org-src-tab-acts-natively t
-      org-confirm-babel-evaluate nil
-      org-export-with-smart-quotes t)
-(add-hook 'org-mode-hook 'org-indent-mode)
-
-(add-hook 'org-mode-hook 'org-indent-mode)
-(add-to-list 'org-structure-template-alist
-             '("el" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
-
-(use-package htmlize
-  :ensure t)
-
 (defalias 'perl-mode 'cperl-mode)
 
 (defun c-set-cperl-style ()
@@ -1143,5 +1173,57 @@ The point should be inside the method to generate docs for"
   (setq tab-width 4)
   (setq c-basic-offset 4)
   (add-to-list 'c-hanging-braces-alist '(substatement-open before after)))
+
+(defvar checkstyle-jar "~/.emacs.d/external/checkstyle-8.33-all.jar")
+(defvar checkstyle-cfg "~/.emacs.d/external/checkstyle.xml")
+
+(flycheck-define-checker checkstyle-java
+  "Runs checkstyle"
+  :command ("java" "-jar" (eval checkstyle-jar) "-c" (eval checkstyle-cfg) "-f" "xml" source)
+  :error-parser flycheck-parse-checkstyle
+  :enable t
+  :modes (java-mode))
+
+(add-to-list 'flycheck-checkers 'checkstyle-java)
+(flycheck-add-next-checker 'lsp 'checkstyle-java)
+
+(use-package sqlup-mode
+  :ensure t
+  :hook
+  (sql-mode . sqlup-mode))
+
+(add-hook 'sql-interactive-mode-hook
+          (lambda () (toggle-truncate-lines t)))
+
+(setq sql-connection-alist
+      '((postgres-local (sql-product  'postgres)
+                        (sql-port     5432)
+                        (sql-server   "localhost")
+                        (sql-user     "dev")
+                        (sql-password "dev"))))
+(defun helm-sql-connect-server (connection)
+  "Connect to the input server from sql-connection-alist"
+  (interactive
+   (helm-comp-read "Select server: " (mapcar (lambda (item)
+                                               (list
+                                                (symbol-name (nth 0 item))
+                                                (nth 0 item)))
+                                             sql-connection-alist)))
+  ;; get the sql connection info and product from the sql-connection-alist
+  (let* ((connection-info    (assoc connection sql-connection-alist))
+         (connection-product (nth 1 (nth 1 (assoc 'sql-product  connection-info)))))
+    ;; delete the connection info from the sql-connection-alist
+    (setq sql-connection-alist (assq-delete-all connection sql-connection-alist))
+    ;; add back the connection info to the beginning of sql-connection-alist
+    ;; (last used server will appear first for the next prompt)
+    (add-to-list 'sql-connection-alist connection-info)
+    ;; override the sql-product by the product of this connection
+    (setq sql-product connection-product)
+    ;; connect
+    (if current-prefix-arg
+        (sql-connect connection connection)
+      (sql-connect connection))))
+
+(define-key helm-command-map (kbd "d") 'helm-sql-connect-server)
 
 (load "~/.emacs.d/zz-overrides")
