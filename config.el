@@ -1,30 +1,45 @@
 ;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
-  (defun my/tangle-dotfiles ()
-    "If the current file is this file, the code blocks are tangled"
-    (when (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org"))
-      (org-babel-tangle nil "~/.emacs.d/config.el")
-      (byte-compile-file "~/.emacs.d/config.el")))
+(defun my/tangle-dotfiles ()
+  "If the current file is this file, the code blocks are tangled"
+  (when (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org"))
+    (org-babel-tangle nil "~/.emacs.d/config.el")
+    (byte-compile-file "~/.emacs.d/config.el")))
 
-  (add-hook 'after-save-hook #'my/tangle-dotfiles)
+(add-hook 'after-save-hook #'my/tangle-dotfiles)
 
-  ;; Snippet for writing elisp like everywhere around this file.
+;; Snippet for writing elisp like everywhere around this file.
 
-  (use-package org
-    :hook
-    (org-mode . org-indent-mode)
-    :config
-    (add-to-list 'org-structure-template-alist
-                 '("el" . "src emacs-lisp"))
-    (require 'org-tempo)
-    (setq org-src-fontify-natively t
-          org-src-tab-acts-natively t
-          org-confirm-babel-evaluate nil
-          org-export-with-smart-quotes t))
+(use-package org
+  :hook
+  ((org-mode . org-indent-mode)
+   (org-mode . smartparens-mode))
+
+  :config
+  (add-to-list 'org-structure-template-alist
+               '("el" . "src emacs-lisp"))
+  (require 'org-tempo)
+  (setq org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-confirm-babel-evaluate nil
+        org-export-with-smart-quotes t))
 
 ;; Convert a buffer and associated decorations to HTML.
+(use-package htmlize
+  :ensure t)
 
-  (use-package htmlize
-    :ensure t)
+;; Don't show temp buffers like *compile-log*
+(setq temp-buffer-show-function (function ignore))
+
+;; from enberg on #emacs
+(add-hook 'compilation-finish-functions
+          (lambda (buf str)
+            (if (null (string-match ".*exited abnormally.*" str))
+                ;;no errors, make the compilation window go away in a few seconds
+                (progn
+                  (run-at-time
+                   "1 sec" nil 'delete-windows-on
+                   (get-buffer-create "*compilation*"))
+                  (message "No Compilation Errors!")))))
 
 (when (eq system-type 'darwin) ;; mac specific settings
   (setq mac-option-modifier 'meta)
@@ -90,15 +105,15 @@
 (fset 'yes-or-no-p 'y-or-n-p)
 
 (use-package recentf
-    :config
-    (add-to-list 'recentf-exclude no-littering-var-directory)
-    (add-to-list 'recentf-exclude no-littering-etc-directory)
-    (setq recentf-max-saved-items 500
-          recentf-max-menu-items 15
-          ;; disable recentf-cleanup on Emacs start, because it can cause
-          ;; problems with remote files
-          recentf-auto-cleanup 'never)
-    (recentf-mode 1))
+  :config
+  (add-to-list 'recentf-exclude no-littering-var-directory)
+  (add-to-list 'recentf-exclude no-littering-etc-directory)
+  (setq recentf-max-saved-items 500
+        recentf-max-menu-items 15
+        ;; disable recentf-cleanup on Emacs start, because it can cause
+        ;; problems with remote files
+        recentf-auto-cleanup 'never)
+  (recentf-mode 1))
 
 (require 'tramp)
 
@@ -144,7 +159,24 @@
   (gcmh-mode 1))
 
 (use-package crux
-  :config)
+  :demand t
+  :bind
+  ("C-c TAB" . crux-indent-rigidly-and-copy-to-clipboard)
+  ("s-k" . crux-kill-whole-line)
+  ("s-j" . crux-top-join-line)
+  ("C-c o" . crux-open-with)
+  ("C-a" . crux-move-beginning-of-line)
+  ("M-o" . crux-smart-open-line)
+  ("s-o" . crux-smart-open-line-above)
+  ("C-c f" . crux-recentf-find-file)
+  ("C-c n" . crux-cleanup-buffer-or-region)
+  ("C-c s" . crux-swap-windows)
+  ("C-c D" . crux-delete-file-and-buffer)
+  ("C-c d" . crux-duplicate-current-line-or-region)
+  ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
+  ("C-c r" . crux-rename-buffer-and-file)
+  ("C-c k" . crux-kill-other-buffers)
+  ("C-c t" . crux-visit-term-buffer))
 
 (use-package dashboard
   :ensure t
@@ -157,9 +189,8 @@
 
 (use-package projectile
   :demand t
-  :init
-  (setq projectile-keymap-prefix (kbd "C-c p"))
   :config
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (setq projectile-indexing-method 'alien
         projectile-generic-command "fd . -0 --no-ignore-vcs"
         projectile-git-command "fd . -0 --no-ignore-vcs"
@@ -186,46 +217,48 @@
 
 (use-package key-chord)
 
+(use-package use-package-chords
+  :ensure t
+  :config (key-chord-mode 1))
+
 (use-package which-key
   :config
   (which-key-mode +1))
 
 (use-package iy-go-to-char
   :ensure t
-  :config
-  (key-chord-define-global "xf" 'iy-go-to-char)
-  (key-chord-define-global "xd" 'iy-go-to-char-backward))
+  :chords
+  (("xf" . iy-go-to-char)
+   ("xd" . iy-go-to-char-backward)))
 
 (use-package hydra
   :ensure t)
 
 ;; TODO: move everything here into use-package
 (use-package switch-window
-  :ensure t)
-;; Override global key bindings for switching windows.
-(global-set-key (kbd "C-x o") 'switch-window)
-(global-set-key (kbd "C-x 1") 'switch-window-then-maximize)
-(global-set-key (kbd "C-x 2") 'switch-window-then-split-below)
-(global-set-key (kbd "C-x 3") 'switch-window-then-split-right)
-(global-set-key (kbd "C-x 0") 'switch-window-then-delete)
-
-(global-set-key (kbd "C-x 4 d") 'switch-window-then-dired)
-(global-set-key (kbd "C-x 4 f") 'switch-window-then-find-file)
-(global-set-key (kbd "C-x 4 m") 'switch-window-then-compose-mail)
-(global-set-key (kbd "C-x 4 r") 'switch-window-then-find-file-read-only)
-
-(global-set-key (kbd "C-x 4 C-f") 'switch-window-then-find-file)
-(global-set-key (kbd "C-x 4 C-o") 'switch-window-then-display-buffer)
-
-(global-set-key (kbd "C-x 4 0") 'switch-window-then-kill-buffer)
-
-;; Use home row instead of number keys.
-(setq switch-window-input-style 'minibuffer)
-(setq switch-window-increase 6)
-(setq switch-window-threshold 2)
-(setq switch-window-shortcut-style 'qwerty)
-(setq switch-window-qwerty-shortcuts
-      '("a" "s" "d" "f" "j" "k" "l" ";" "w" "e" "i" "o"))
+  ;; Override global key bindings for switching windows.
+  :bind
+  (("C-x o" . switch-window)
+   ("C-x 1" . switch-window-then-maximize)
+   ("C-x 2" . switch-window-then-split-below)
+   ("C-x 3" . switch-window-then-split-right)
+   ("C-x 0" . switch-window-then-delete)
+   ("C-x 4 d" . switch-window-then-dired)
+   ("C-x 4 f" . switch-window-then-find-file)
+   ("C-x 4 m" . switch-window-then-compose-mail)
+   ("C-x 4 r" . switch-window-then-find-file-read-only)
+   ("C-x 4 C-f" . switch-window-then-find-file)
+   ("C-x 4 C-o" . switch-window-then-display-buffer)
+   ("C-x 4 0" . switch-window-then-kill-buffer))
+  :demand t
+  :config
+  (setq switch-window-input-style 'minibuffer)
+  (setq switch-window-increase 6)
+  (setq switch-window-threshold 2)
+  (setq switch-window-shortcut-style 'qwerty)
+  ;; Use home row instead of number keys.
+  (setq switch-window-qwerty-shortcuts
+        '("a" "s" "d" "f" "j" "k" "l" ";" "w" "e" "i" "o")))
 
 (use-package ace-window
   :config
@@ -233,8 +266,6 @@
 ;; Set it to also use homerow keys instead of numbers for buffers.
 ;; TODO: decide which one I like better, e.g.
 ;; (Super-w v a) or (C-x 2 a) to split window a.
-
-
 
 ;; Hydra keybinds for ace-window
 (global-set-key
@@ -318,25 +349,7 @@
 
 (global-set-key (kbd "C-c x a") 'all-over-the-screen)
 
-(global-set-key (kbd "C-c o") 'crux-open-with)
-(global-set-key (kbd "C-a") 'crux-move-beginning-of-line)
-(global-set-key (kbd "M-o") 'crux-smart-open-line)
-(global-set-key (kbd "s-o") 'crux-smart-open-line-above)
-(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
-(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
-(global-set-key (kbd "C-c s") 'crux-swap-windows)
-(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
-(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
-(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
-(global-set-key (kbd "C-c r") 'crux-rename-buffer-and-file)
-(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
-(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
 (global-set-key (kbd "C-c i") 'imenu-anywhere)
-(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
-(global-set-key (kbd "s-k") 'crux-kill-whole-line)
-(global-set-key (kbd "s-j") 'crux-top-join-line)
-
-
 (global-set-key (kbd "C-x \\") 'align-regexp)
 
 ;; Font size
@@ -352,7 +365,7 @@
 (global-set-key (kbd "C-^") 'crux-top-join-line)
 ;; Start proced in a similar manner to dired
 (unless (eq system-type 'darwin)
-    (global-set-key (kbd "C-x p") 'proced))
+  (global-set-key (kbd "C-x p") 'proced))
 
 ;; Start eshell or switch to it if it's active.
 (global-set-key (kbd "C-x m") 'eshell)
@@ -398,9 +411,6 @@
 ;; replace buffer-menu with ibuffer
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 
-(unless (fboundp 'toggle-frame-fullscreen)
-  (global-set-key (kbd "<f11>") 'prelude-fullscreen))
-
 ;; toggle menu-bar visibility
 (global-set-key (kbd "<f12>") 'menu-bar-mode)
 
@@ -420,10 +430,11 @@
 
 (global-set-key (kbd "C-c v c") 'config-visit)
 
-;; Reload config file
+;; Reload config file and refresh quickstart file
 (defun config-reload ()
   (interactive)
-  (org-babel-load-file "~/.emacs.d/config.org"))
+  (org-babel-load-file "~/.emacs.d/config.org")
+  (package-quickstart-refresh))
 
 (global-set-key (kbd "C-c v r") 'config-reload)
 
@@ -476,14 +487,14 @@
   (global-set-key (kbd "C-M-%") 'anzu-query-replace-regexp))
 
 ;; Currently disabed because it doesn't work with mood-line
-  ;; (use-package nyan-mode
-  ;;   :ensure t
-  ;;   :config
-  ;;   (setq nyan-animate-nyancat t
-  ;;         nyan-wavy-trail t
-  ;;         nyan-bar-length 13))
+;; (use-package nyan-mode
+;;   :ensure t
+;;   :config
+;;   (setq nyan-animate-nyancat t
+;;         nyan-wavy-trail t
+;;         nyan-bar-length 13))
 
-  ;; (nyan-mode 1)
+;; (nyan-mode 1)
 
 ;; (use-package spaceline
 ;;   :ensure t
@@ -908,6 +919,8 @@ The point should be inside the method to generate docs for"
 
 (use-package undo-tree
   :diminish t
+  :chords
+  ("uu" . undo-tree-visualize)
   :config
   (global-undo-tree-mode 1))
 
@@ -930,7 +943,7 @@ The point should be inside the method to generate docs for"
   (setq auto-save-default nil))
 
 (use-package smartparens
-  :ensure t
+  :demand t
   :config
   (require 'smartparens-config)
   (setq sp-base-key-bindings 'paredit)
@@ -1089,8 +1102,9 @@ The point should be inside the method to generate docs for"
 
 (add-hook 'c-mode-common-hook '(lambda () (c-toggle-hungry-state 1) (c-toggle-auto-newline 1) (c-set-style "bsd")))
 
-;; yasnippet
+;; yasnippet and smartparens
 (add-hook 'python-mode-hook 'yas-minor-mode)
+(add-hook 'python-mode-hook 'smartparens-mode)
 
 (use-package lsp-python-ms
   :ensure t
