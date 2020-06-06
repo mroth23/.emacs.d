@@ -375,9 +375,6 @@
 ;; toggle menu-bar visibility
 (global-set-key (kbd "<f12>") 'menu-bar-mode)
 
-(global-set-key (kbd "C-x g") 'magit-status)
-(global-set-key (kbd "C-x M-g") 'magit-dispatch)
-
 (global-set-key (kbd "C-=") 'er/expand-region)
 
 (global-set-key (kbd "C-c j") 'avy-goto-word-or-subword-1)
@@ -564,12 +561,13 @@
    ("C-z"     . helm-select-action)
    :map minibuffer-local-map
    ("C-c C-l" . helm-minibuffer-history))
+  :bind*
+  (("C-r"     . helm-resume))
   :init
   (setq helm-command-prefix-key "C-c h")
   (require 'helm-config)
   :config
   (helm-mode 1)
-  (bind-key* "C-r" 'helm-resume)
   ;; Fuzzy matching everywhere
   (setq
    ;; Autoresize helm buffer depending on match count
@@ -691,7 +689,11 @@ The point should be inside the method to generate docs for"
       (aya-expand))))
 
 (use-package magit
-  :defer t
+  :ensure t
+  :commands (magit-status magit-dispatch)
+  :bind
+  (("C-x g"   . magit-status)
+   ("C-x M-g" . magit-dispatch))
   :hook
   (after-save . magit-after-save-refresh-status)
   :config

@@ -12,3 +12,8 @@
 
 .DS_Store
 package-quickstart.el
+
+/external/
+/data/
+/elpa/
+/server/

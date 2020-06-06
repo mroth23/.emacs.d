@@ -826,6 +826,8 @@ Extra magit settings. I refresh the magit buffer on file save because it's
 annoying to do so manually. Also, use forge for GitHub integration in Magit.
 #+BEGIN_SRC emacs-lisp
   (use-package magit
+    :ensure t
+    :commands (magit-status magit-dispatch)
     :bind
     (("C-x g"   . magit-status)
      ("C-x M-g" . magit-dispatch))
@@ -1115,6 +1117,19 @@ Also clean up whitespace in before-save-hook.
 ** flycheck
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck)
+
+  (define-key flycheck-mode-map flycheck-keymap-prefix nil)
+  (setq flycheck-keymap-prefix (kbd "C-c f"))
+  (define-key flycheck-mode-map flycheck-keymap-prefix
+    flycheck-command-map)
+
+  (setq flycheck-checker-error-threshold 5000)
+
+  (defun flycheck-display-error-messages-unless-error-buffer (errors)
+    (unless (get-buffer-window flycheck-error-list-buffer)
+      (flycheck-display-error-messages errors)))
+
+  (setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-buffer)
 #+END_SRC
 * Language specific config
 ** LSP
@@ -1342,6 +1357,60 @@ Convert a buffer and associated decorations to HTML.
     (setq tab-width 4)
     (setq c-basic-offset 4)
     (add-to-list 'c-hanging-braces-alist '(substatement-open before after)))
+
+  (defvar checkstyle-jar "~/.emacs.d/external/checkstyle-8.33-all.jar")
+  (defvar checkstyle-cfg "~/.emacs.d/external/checkstyle.xml")
+
+  (flycheck-define-checker checkstyle-java
+    "Runs checkstyle"
+    :command ("java" "-jar" (eval checkstyle-jar) "-c" (eval checkstyle-cfg) "-f" "xml" source)
+    :error-parser flycheck-parse-checkstyle
+    :enable t
+    :modes (java-mode))
+
+  (add-to-list 'flycheck-checkers 'checkstyle-java)
+  (flycheck-add-next-checker 'lsp 'checkstyle-java)
+#+END_SRC
+** SQL
+#+BEGIN_SRC emacs-lisp
+  (use-package sqlup-mode
+    :ensure t
+    :hook
+    (sql-mode . sqlup-mode))
+
+  (add-hook 'sql-interactive-mode-hook
+            (lambda () (toggle-truncate-lines t)))
+
+  (setq sql-connection-alist
+        '((postgres-local (sql-product  'postgres)
+                          (sql-port     5432)
+                          (sql-server   "localhost")
+                          (sql-user     "dev")
+                          (sql-password "dev"))))
+  (defun helm-sql-connect-server (connection)
+    "Connect to the input server from sql-connection-alist"
+    (interactive
+     (helm-comp-read "Select server: " (mapcar (lambda (item)
+                                                 (list
+                                                  (symbol-name (nth 0 item))
+                                                  (nth 0 item)))
+                                               sql-connection-alist)))
+    ;; get the sql connection info and product from the sql-connection-alist
+    (let* ((connection-info    (assoc connection sql-connection-alist))
+           (connection-product (nth 1 (nth 1 (assoc 'sql-product  connection-info)))))
+      ;; delete the connection info from the sql-connection-alist
+      (setq sql-connection-alist (assq-delete-all connection sql-connection-alist))
+      ;; add back the connection info to the beginning of sql-connection-alist
+      ;; (last used server will appear first for the next prompt)
+      (add-to-list 'sql-connection-alist connection-info)
+      ;; override the sql-product by the product of this connection
+      (setq sql-product connection-product)
+      ;; connect
+      (if current-prefix-arg
+          (sql-connect connection connection)
+        (sql-connect connection))))
+
+  (define-key helm-command-map (kbd "d") 'helm-sql-connect-server)
 #+END_SRC
 * Overrides
 #+BEGIN_SRC emacs-lisp
