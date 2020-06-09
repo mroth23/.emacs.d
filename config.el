@@ -979,7 +979,10 @@ The point should be inside the method to generate docs for"
   :config
   (global-hl-todo-mode 1))
 
-(use-package flycheck)
+(use-package flycheck
+  :demand t
+  :hook
+  (prog-mode . flycheck-mode))
 
 (define-key flycheck-mode-map flycheck-keymap-prefix nil)
 (setq flycheck-keymap-prefix (kbd "C-c f"))
@@ -1239,5 +1242,18 @@ The point should be inside the method to generate docs for"
       (sql-connect connection))))
 
 (define-key helm-command-map (kbd "d") 'helm-sql-connect-server)
+
+(use-package web-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.tpl\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.hbs\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.blade\\.php\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.jsp\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("/\\(views\\|html\\|theme\\|templates\\)/.*\\.php\\'" . web-mode)))
 
 (load "~/.emacs.d/zz-overrides")

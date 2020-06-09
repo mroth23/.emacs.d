@@ -69,4 +69,5 @@
 ;; This is the actual config file. It is omitted if it doesn't exist so emacs won't refuse to launch.
 (if (file-readable-p "~/.emacs.d/config.elc")
     (load-file "~/.emacs.d/config.elc")
-  (org-babel-load-file "~/.emacs.d/config.org"))
+  (if (file-readable-p "~/.emacs.d/config.org")
+      (org-babel-load-file "~/.emacs.d/config.org")))
