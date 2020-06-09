@@ -97,11 +97,10 @@
 (global-hl-line-mode +1)
 (global-visual-line-mode +1)
 (global-display-line-numbers-mode)
+(blink-cursor-mode 0)
 
 (setq ring-bell-function 'ignore)
-
 (set-default 'imenu-auto-rescan t)
-
 (fset 'yes-or-no-p 'y-or-n-p)
 
 (use-package recentf
@@ -472,6 +471,14 @@
       ("%" . apply-operation-to-number-at-point)
       ("'" . operate-on-number-at-point))))
 
+(defun end-line-with-semicolon ()
+  (interactive)
+  (move-end-of-line nil)
+  (insert-char ?\; 1)
+  (crux-smart-open-line nil))
+
+(global-set-key (kbd "C-;") 'end-line-with-semicolon)
+
 (use-package avy
   :config
   (setq avy-background t)
@@ -635,7 +642,17 @@
 (use-package helm-projectile
   :config
   (setq projectile-completion-system 'helm)
-  (helm-projectile-on))
+  (helm-projectile-on)
+  (defun helm-projectile-ag (&optional options)
+    "Helm version of projectile-ag."
+    (interactive (if current-prefix-arg (list (read-string "option: " "" 'helm-ag--extra-options-history))))
+    (if (require 'helm-ag nil  'noerror)
+        (if (projectile-project-p)
+            (let ((helm-ag-command-option options)
+                  (current-prefix-arg nil))
+              (helm-do-ag (projectile-project-root) (car (projectile-parse-dirconfig-file))))
+          (error "You're not in a project"))
+      (error "helm-ag not available"))))
 
 ;; Additional Helm-related packages
 (use-package helm-flx
@@ -649,8 +666,8 @@
   :after helm)
 
 (use-package helm-ag
-  :init
-  (setq helm-ag-base-command "ag -U --vimgrep"))
+  :custom
+  (helm-ag-base-command "rg --no-heading --pcre2 --color=never --vimgrep"))
 
 (use-package dot-mode
   :ensure t
@@ -982,20 +999,15 @@ The point should be inside the method to generate docs for"
 (use-package flycheck
   :demand t
   :hook
-  (prog-mode . flycheck-mode))
-
-(define-key flycheck-mode-map flycheck-keymap-prefix nil)
-(setq flycheck-keymap-prefix (kbd "C-c f"))
-(define-key flycheck-mode-map flycheck-keymap-prefix
-  flycheck-command-map)
-
-(setq flycheck-checker-error-threshold 5000)
-
-(defun flycheck-display-error-messages-unless-error-buffer (errors)
-  (unless (get-buffer-window flycheck-error-list-buffer)
-    (flycheck-display-error-messages errors)))
-
-(setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-buffer)
+  (prog-mode . flycheck-mode)
+  :config
+  (setq flycheck-checker-error-threshold 5000
+        flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list
+        flycheck-check-syntax-automatically '(mode-enabled save))
+  (define-key flycheck-mode-map flycheck-keymap-prefix nil)
+  (setq flycheck-keymap-prefix (kbd "C-c f"))
+  (define-key flycheck-mode-map flycheck-keymap-prefix
+    flycheck-command-map))
 
 (use-package helm-lsp
   :ensure t
@@ -1191,8 +1203,8 @@ The point should be inside the method to generate docs for"
   (setq c-basic-offset 4)
   (add-to-list 'c-hanging-braces-alist '(substatement-open before after)))
 
-(defvar checkstyle-jar "~/.emacs.d/external/checkstyle-8.33-all.jar")
-(defvar checkstyle-cfg "~/.emacs.d/external/checkstyle.xml")
+(defvar checkstyle-jar (expand-file-name "~/.emacs.d/external/checkstyle-8.33-all.jar"))
+(defvar checkstyle-cfg (expand-file-name "~/.emacs.d/external/checkstyle.xml"))
 
 (flycheck-define-checker checkstyle-java
   "Runs checkstyle"
