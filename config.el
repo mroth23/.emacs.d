@@ -1,46 +1,3 @@
-;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
-(defun my/tangle-dotfiles ()
-  "If the current file is this file, the code blocks are tangled"
-  (when (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org"))
-    (org-babel-tangle nil "~/.emacs.d/config.el")
-    (byte-compile-file "~/.emacs.d/config.el")))
-
-(add-hook 'after-save-hook #'my/tangle-dotfiles)
-
-;; Snippet for writing elisp like everywhere around this file.
-
-(use-package org
-  :hook
-  ((org-mode . org-indent-mode)
-   (org-mode . smartparens-mode))
-
-  :config
-  (add-to-list 'org-structure-template-alist
-               '("el" . "src emacs-lisp"))
-  (require 'org-tempo)
-  (setq org-src-fontify-natively t
-        org-src-tab-acts-natively t
-        org-confirm-babel-evaluate nil
-        org-export-with-smart-quotes t))
-
-;; Convert a buffer and associated decorations to HTML.
-(use-package htmlize
-  :ensure t)
-
-;; Don't show temp buffers like *compile-log*
-(setq temp-buffer-show-function (function ignore))
-
-;; from enberg on #emacs
-(add-hook 'compilation-finish-functions
-          (lambda (buf str)
-            (if (null (string-match ".*exited abnormally.*" str))
-                ;;no errors, make the compilation window go away in a few seconds
-                (progn
-                  (run-at-time
-                   "1 sec" nil 'delete-windows-on
-                   (get-buffer-create "*compilation*"))
-                  (message "No Compilation Errors!")))))
-
 (when (eq system-type 'darwin) ;; mac specific settings
   (setq mac-option-modifier 'meta)
   ;; (setq mac-right-option-modifier 'none)
@@ -149,7 +106,6 @@
 
 ;; Instead of setting gc-cons-threshold, use gcmh.
 (use-package gcmh
-  :ensure t
   :init
   (setq gcmh-high-cons-threshold 50000000
         gcmh-verbose nil
@@ -178,7 +134,6 @@
   ("C-c t" . crux-visit-term-buffer))
 
 (use-package dashboard
-  :ensure t
   :config
   (dashboard-setup-startup-hook)
   (setq dashboard-items '((recents  . 5)
@@ -217,7 +172,6 @@
 (use-package key-chord)
 
 (use-package use-package-chords
-  :ensure t
   :config (key-chord-mode 1))
 
 (use-package which-key
@@ -225,13 +179,11 @@
   (which-key-mode +1))
 
 (use-package iy-go-to-char
-  :ensure t
   :chords
   (("xf" . iy-go-to-char)
    ("xd" . iy-go-to-char-backward)))
 
-(use-package hydra
-  :ensure t)
+(use-package hydra)
 
 ;; TODO: move everything here into use-package
 (use-package switch-window
@@ -304,7 +256,6 @@
 
 ;; Multiple cursors
 (use-package multiple-cursors
-  :ensure t
   :demand t
   :bind
   (("C-S-c C-S-c" . mc/edit-lines)
@@ -514,10 +465,8 @@
 ;;   (spaceline-emacs-theme))
 
 (use-package mood-line
-  :ensure t
-  :config)
-
-(mood-line-mode)
+  :config
+  (mood-line-mode))
 
 (setq display-time-24hr-format t)
 (setq display-time-format " %H:%M ")
@@ -527,7 +476,6 @@
 (display-time-mode 1)
 
 (use-package fancy-battery
-  :ensure t
   :config
   (setq fancy-battery-show-percentage t)
   (setq battery-update-interval 15)
@@ -550,7 +498,6 @@
         ("<tab>" . company-complete-selection))
   :hook
   (prog-mode . company-mode)
-  :ensure t
   :config
   (setq company-minimum-prefix-length 3)
   (setq company-idle-delay 0.4)
@@ -566,10 +513,9 @@
 
 ;; dotenv-mode
 (use-package dotenv-mode
-  :ensure t)
-
-;; Also apply to .env with extension such as .env.local
-(add-to-list 'auto-mode-alist '("\\.env\\..*\\'" . dotenv-mode))
+  :config
+  ;; Also apply to .env with extension such as .env.local)
+  (add-to-list 'auto-mode-alist '("\\.env\\..*\\'" . dotenv-mode)))
 
 ;; Use swiper for search.
 (use-package swiper)
@@ -656,7 +602,6 @@
 
 ;; Additional Helm-related packages
 (use-package helm-flx
-  :ensure t
   :config
   (helm-flx-mode +1)
   (setq helm-flx-for-helm-find-files t
@@ -670,12 +615,10 @@
   (helm-ag-base-command "rg --no-heading --pcre2 --color=never --vimgrep"))
 
 (use-package dot-mode
-  :ensure t
   :config
   (global-dot-mode 1))
 
 (use-package rainbow-delimiters
-  :ensure t
   :hook
   (prog-mode . rainbow-delimiters-mode))
 
@@ -687,23 +630,19 @@
 
 (when window-system
   (use-package pretty-mode
-    :ensure t
-    :after
+    :demand t
     (global-pretty-mode t)))
 
 (global-prettify-symbols-mode +1)
 
 (use-package yasnippet
-  :ensure t
   :config
   (add-to-list 'yas-snippet-dirs "~/.emacs.d/personal/snippets")
-  (use-package yasnippet-snippets
-    :ensure t)
+  (use-package yasnippet-snippets)
   (add-to-list 'yas-snippet-dirs "~/.emacs.d/personal/snippets" t)
   (yas-reload-all))
 
 (use-package auto-yasnippet
-  :ensure t
   :after yasnippet
   :bind
   ("C-o" . aya-open-line)
@@ -747,7 +686,6 @@ The point should be inside the method to generate docs for"
       (aya-expand))))
 
 (use-package magit
-  :ensure t
   :commands (magit-status magit-dispatch)
   :bind
   (("C-x g"   . magit-status)
@@ -788,7 +726,6 @@ The point should be inside the method to generate docs for"
   (magit-refresh))
 
 (use-package vimish-fold
-  :ensure t
   :config (add-hook 'prog-mode-hook 'vimish-fold-mode))
 
 (bind-key "s-a" (defhydra hydra-vimish-fold
@@ -820,7 +757,6 @@ The point should be inside the method to generate docs for"
   (define-key god-local-mode-map (kbd ".") 'repeat))
 
 (use-package sx
-  :ensure t
   :config
   (bind-keys :prefix "C-c q"
              :prefix-map my-sx-map
@@ -833,7 +769,6 @@ The point should be inside the method to generate docs for"
              ("s" . sx-search)))
 
 (use-package nhexl-mode
-  :ensure t
   :defer t)
 
 ;;;; This is currently disabled because of a compilation error in pdf-tools.
@@ -847,7 +782,6 @@ The point should be inside the method to generate docs for"
 
 (use-package outshine
   :defer t
-  :ensure t
   :hook
   ((emacs-lisp-mode . outshine-mode)
    (LaTeX-mode . outshine-mode)
@@ -858,7 +792,6 @@ The point should be inside the method to generate docs for"
    (python-mode . outshine-mode)))
 
 (use-package treemacs
-  :ensure t
   :config
   (setq treemacs-width 50
         treemacs-indentation 2))
@@ -885,14 +818,12 @@ The point should be inside the method to generate docs for"
 
 ;; String-edit: Edit strings in separate buffer to avoid escape nightmares
 (use-package string-edit
-  :ensure t
   :bind
   (:map c-mode-base-map
         ("C-c '" . string-edit-at-point)))
 
 ;; Unfill - opposite to M-q (fill-paragraph)
 (use-package unfill
-  :ensure t
   :bind ([remap fill-paragraph] . unfill-toggle))
 
 ;; Source: https://github.com/angrybacon/dotemacs/blob/master/dotemacs.org
@@ -1010,11 +941,9 @@ The point should be inside the method to generate docs for"
     flycheck-command-map))
 
 (use-package helm-lsp
-  :ensure t
   :commands helm-lsp-workspace-symbol)
 
 (use-package lsp-mode
-  :ensure t
   :hook
   ((c++-mode
     c-mode
@@ -1046,7 +975,6 @@ The point should be inside the method to generate docs for"
   (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))
 
 (use-package lsp-ui
-  :ensure t
   :after lsp-mode
   :demand t
   :hook
@@ -1075,8 +1003,7 @@ The point should be inside the method to generate docs for"
 ;; Some C/C++ settings
 (require 'lsp-mode)
 (require 'lsp-clients)
-(use-package clang-format
-  :ensure t)
+(use-package clang-format)
 
 (defun clang-format-save-hook-for-this-buffer ()
   "Create a buffer local save hook."
@@ -1096,7 +1023,6 @@ The point should be inside the method to generate docs for"
 (add-hook 'c++-mode-hook 'lsp)
 
 (use-package ccls
-  :ensure t
   :hook ((c-mode c++-mode objc-mode) .
          (lambda () (require 'ccls) (lsp))))
 (setq ccls-executable "c:/prj/ccls/Release/ccls.exe")
@@ -1106,7 +1032,6 @@ The point should be inside the method to generate docs for"
 
 ;; Use clang for formatting and flycheck in C/C++.
 (use-package flycheck-clang-analyzer
-  :ensure t
   :after flycheck
   :config (flycheck-clang-analyzer-setup))
 
@@ -1122,7 +1047,6 @@ The point should be inside the method to generate docs for"
 (add-hook 'python-mode-hook 'smartparens-mode)
 
 (use-package lsp-python-ms
-  :ensure t
   :init (setq lsp-python-ms-auto-install-server t)
   :hook (python-mode . (lambda ()
                          (setq-default tab-width 4)
@@ -1132,7 +1056,6 @@ The point should be inside the method to generate docs for"
 ;; virtualenvwrapper
 (use-package virtualenvwrapper
   :hook python-mode
-  :ensure t
   :demand t
   :config
   ;; virtualenvwrapper init for eshell and interactive shell.
@@ -1145,15 +1068,11 @@ The point should be inside the method to generate docs for"
 
 ;; py-isort
 (use-package py-isort
-  :defer t
   :hook
-  (python-mode . (lambda () (add-hook 'before-save-hook 'py-isort-before-save)))
-  :ensure t)
+  (python-mode . (lambda () (add-hook 'before-save-hook 'py-isort-before-save))))
 
 ;; yapf
 (use-package yapfify
-  :defer t
-  :ensure t
   :hook
   (python-mode . yapf-mode))
 
@@ -1184,7 +1103,6 @@ The point should be inside the method to generate docs for"
                               (c-toggle-auto-newline 1)))
 
 (use-package lsp-java
-  :ensure t
   :demand t
   :config
   (setq lsp-java-format-enabled nil
@@ -1217,7 +1135,6 @@ The point should be inside the method to generate docs for"
 (flycheck-add-next-checker 'lsp 'checkstyle-java)
 
 (use-package sqlup-mode
-  :ensure t
   :hook
   (sql-mode . sqlup-mode))
 
@@ -1267,5 +1184,47 @@ The point should be inside the method to generate docs for"
   (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("/\\(views\\|html\\|theme\\|templates\\)/.*\\.php\\'" . web-mode)))
+
+;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
+(defun my/tangle-dotfiles ()
+  "If the current file is this file, the code blocks are tangled"
+  (when (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org"))
+    (org-babel-tangle nil "~/.emacs.d/config.el")
+    (byte-compile-file "~/.emacs.d/config.el")))
+
+(add-hook 'after-save-hook #'my/tangle-dotfiles)
+
+;; Snippet for writing elisp like everywhere around this file.
+
+(use-package org
+  :hook
+  ((org-mode . org-indent-mode)
+   (org-mode . smartparens-mode))
+
+  :config
+  (add-to-list 'org-structure-template-alist
+               '("el" . "src emacs-lisp"))
+  (require 'org-tempo)
+  (setq org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-confirm-babel-evaluate nil
+        org-export-with-smart-quotes t))
+
+;; Convert a buffer and associated decorations to HTML.
+(use-package htmlize)
+
+;; Don't show temp buffers like *compile-log*
+(setq temp-buffer-show-function (function ignore))
+
+;; from enberg on #emacs
+(add-hook 'compilation-finish-functions
+          (lambda (buf str)
+            (if (null (string-match ".*exited abnormally.*" str))
+                ;;no errors, make the compilation window go away in a few seconds
+                (progn
+                  (run-at-time
+                   "1 sec" nil 'delete-windows-on
+                   (get-buffer-create "*compilation*"))
+                  (message "No Compilation Errors!")))))
 
 (load "~/.emacs.d/zz-overrides")

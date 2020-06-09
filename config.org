@@ -7,51 +7,6 @@ keybinds, the mode line and more.
 
 In the second section, there's major-mode specific settings for those modes that are important
 to me.
-* Org Config setup
-#+BEGIN_SRC emacs-lisp
-  ;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
-  (defun my/tangle-dotfiles ()
-    "If the current file is this file, the code blocks are tangled"
-    (when (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org"))
-      (org-babel-tangle nil "~/.emacs.d/config.el")
-      (byte-compile-file "~/.emacs.d/config.el")))
-
-  (add-hook 'after-save-hook #'my/tangle-dotfiles)
-
-  ;; Snippet for writing elisp like everywhere around this file.
-
-  (use-package org
-    :hook
-    ((org-mode . org-indent-mode)
-     (org-mode . smartparens-mode))
-
-    :config
-    (add-to-list 'org-structure-template-alist
-                 '("el" . "src emacs-lisp"))
-    (require 'org-tempo)
-    (setq org-src-fontify-natively t
-          org-src-tab-acts-natively t
-          org-confirm-babel-evaluate nil
-          org-export-with-smart-quotes t))
-
-  ;; Convert a buffer and associated decorations to HTML.
-  (use-package htmlize
-    :ensure t)
-
-  ;; Don't show temp buffers like *compile-log*
-  (setq temp-buffer-show-function (function ignore))
-
-  ;; from enberg on #emacs
-  (add-hook 'compilation-finish-functions
-            (lambda (buf str)
-              (if (null (string-match ".*exited abnormally.*" str))
-                  ;;no errors, make the compilation window go away in a few seconds
-                  (progn
-                    (run-at-time
-                     "1 sec" nil 'delete-windows-on
-                     (get-buffer-create "*compilation*"))
-                    (message "No Compilation Errors!")))))
-#+END_SRC
 * UI/global
 ** Darwin
 Custom configuration for Mac OSX.
@@ -212,7 +167,6 @@ Things that don't seem to fit anywhere else.
 #+BEGIN_SRC emacs-lisp
   ;; Instead of setting gc-cons-threshold, use gcmh.
   (use-package gcmh
-    :ensure t
     :init
     (setq gcmh-high-cons-threshold 50000000
           gcmh-verbose nil
@@ -245,7 +199,6 @@ Things that don't seem to fit anywhere else.
 ** Dashboard
 #+BEGIN_SRC emacs-lisp
   (use-package dashboard
-    :ensure t
     :config
     (dashboard-setup-startup-hook)
     (setq dashboard-items '((recents  . 5)
@@ -296,7 +249,6 @@ Also enable caching and set sort order to recent files.
   (use-package key-chord)
 
   (use-package use-package-chords
-    :ensure t
     :config (key-chord-mode 1))
 #+END_SRC
 *** which-key
@@ -309,15 +261,13 @@ Also enable caching and set sort order to recent files.
 Use iy-go-to-char to jump around in the buffer.
 #+BEGIN_SRC emacs-lisp
   (use-package iy-go-to-char
-    :ensure t
     :chords
     (("xf" . iy-go-to-char)
      ("xd" . iy-go-to-char-backward)))
 #+END_SRC
 *** Hydra
 #+BEGIN_SRC emacs-lisp
-  (use-package hydra
-    :ensure t)
+  (use-package hydra)
 #+END_SRC
 *** switch-window
 #+BEGIN_SRC emacs-lisp
@@ -394,7 +344,6 @@ Use iy-go-to-char to jump around in the buffer.
 #+BEGIN_SRC emacs-lisp
   ;; Multiple cursors
   (use-package multiple-cursors
-    :ensure t
     :demand t
     :bind
     (("C-S-c C-S-c" . mc/edit-lines)
@@ -632,10 +581,8 @@ Use mood-line.
   ;;   (spaceline-emacs-theme))
 
   (use-package mood-line
-    :ensure t
-    :config)
-
-  (mood-line-mode)
+    :config
+    (mood-line-mode))
 #+END_SRC
 *** Clock and battery
 #+BEGIN_SRC emacs-lisp
@@ -647,7 +594,6 @@ Use mood-line.
   (display-time-mode 1)
 
   (use-package fancy-battery
-    :ensure t
     :config
     (setq fancy-battery-show-percentage t)
     (setq battery-update-interval 15)
@@ -674,7 +620,6 @@ Use mood-line.
           ("<tab>" . company-complete-selection))
     :hook
     (prog-mode . company-mode)
-    :ensure t
     :config
     (setq company-minimum-prefix-length 3)
     (setq company-idle-delay 0.4)
@@ -692,10 +637,9 @@ Use mood-line.
 #+BEGIN_SRC emacs-lisp
   ;; dotenv-mode
   (use-package dotenv-mode
-    :ensure t)
-
-  ;; Also apply to .env with extension such as .env.local
-  (add-to-list 'auto-mode-alist '("\\.env\\..*\\'" . dotenv-mode))
+    :config
+    ;; Also apply to .env with extension such as .env.local)
+    (add-to-list 'auto-mode-alist '("\\.env\\..*\\'" . dotenv-mode)))
 #+END_SRC
 ** Helm
 #+BEGIN_SRC emacs-lisp
@@ -784,7 +728,6 @@ Use mood-line.
 
   ;; Additional Helm-related packages
   (use-package helm-flx
-    :ensure t
     :config
     (helm-flx-mode +1)
     (setq helm-flx-for-helm-find-files t
@@ -800,14 +743,12 @@ Use mood-line.
 ** dot-mode
 #+BEGIN_SRC emacs-lisp
   (use-package dot-mode
-    :ensure t
     :config
     (global-dot-mode 1))
 #+END_SRC
 ** rainbow-delimiters
 #+BEGIN_SRC emacs-lisp
   (use-package rainbow-delimiters
-    :ensure t
     :hook
     (prog-mode . rainbow-delimiters-mode))
 
@@ -821,8 +762,8 @@ Use mood-line.
 #+BEGIN_SRC emacs-lisp
   (when window-system
     (use-package pretty-mode
-      :ensure t
-      :after
+      :demand t
+      :config
       (global-pretty-mode t)))
 
   (global-prettify-symbols-mode +1)
@@ -830,16 +771,13 @@ Use mood-line.
 ** yasnippet
 #+BEGIN_SRC emacs-lisp
   (use-package yasnippet
-    :ensure t
     :config
     (add-to-list 'yas-snippet-dirs "~/.emacs.d/personal/snippets")
-    (use-package yasnippet-snippets
-      :ensure t)
+    (use-package yasnippet-snippets)
     (add-to-list 'yas-snippet-dirs "~/.emacs.d/personal/snippets" t)
     (yas-reload-all))
 
   (use-package auto-yasnippet
-    :ensure t
     :after yasnippet
     :bind
     ("C-o" . aya-open-line)
@@ -887,7 +825,6 @@ Extra magit settings. I refresh the magit buffer on file save because it's
 annoying to do so manually. Also, use forge for GitHub integration in Magit.
 #+BEGIN_SRC emacs-lisp
   (use-package magit
-    :ensure t
     :commands (magit-status magit-dispatch)
     :bind
     (("C-x g"   . magit-status)
@@ -930,7 +867,6 @@ annoying to do so manually. Also, use forge for GitHub integration in Magit.
 ** vimish-fold
 #+BEGIN_SRC emacs-lisp
   (use-package vimish-fold
-    :ensure t
     :config (add-hook 'prog-mode-hook 'vimish-fold-mode))
 
   (bind-key "s-a" (defhydra hydra-vimish-fold
@@ -968,7 +904,6 @@ annoying to do so manually. Also, use forge for GitHub integration in Magit.
 ** StackExchange / sx
 #+BEGIN_SRC emacs-lisp
   (use-package sx
-    :ensure t
     :config
     (bind-keys :prefix "C-c q"
                :prefix-map my-sx-map
@@ -984,7 +919,6 @@ annoying to do so manually. Also, use forge for GitHub integration in Magit.
 Note that this is a minor mode. Defer loading until actually used.
 #+BEGIN_SRC emacs-lisp
   (use-package nhexl-mode
-    :ensure t
     :defer t)
 #+END_SRC
 ** pdf-tools
@@ -1002,7 +936,6 @@ Note that this is a minor mode. Defer loading until actually used.
 #+BEGIN_SRC emacs-lisp
   (use-package outshine
     :defer t
-    :ensure t
     :hook
     ((emacs-lisp-mode . outshine-mode)
      (LaTeX-mode . outshine-mode)
@@ -1015,7 +948,6 @@ Note that this is a minor mode. Defer loading until actually used.
 ** Treemacs
 #+BEGIN_SRC emacs-lisp
   (use-package treemacs
-    :ensure t
     :config
     (setq treemacs-width 50
           treemacs-indentation 2))
@@ -1047,14 +979,12 @@ This section contains some global(ish) modes and shortcuts where settings are th
 
   ;; String-edit: Edit strings in separate buffer to avoid escape nightmares
   (use-package string-edit
-    :ensure t
     :bind
     (:map c-mode-base-map
           ("C-c '" . string-edit-at-point)))
 
   ;; Unfill - opposite to M-q (fill-paragraph)
   (use-package unfill
-    :ensure t
     :bind ([remap fill-paragraph] . unfill-toggle))
 
   ;; Source: https://github.com/angrybacon/dotemacs/blob/master/dotemacs.org
@@ -1197,11 +1127,9 @@ Also clean up whitespace in before-save-hook.
 I use lsp-mode for language-server-protocol support.
 #+BEGIN_SRC emacs-lisp
   (use-package helm-lsp
-    :ensure t
     :commands helm-lsp-workspace-symbol)
 
   (use-package lsp-mode
-    :ensure t
     :hook
     ((c++-mode
       c-mode
@@ -1233,7 +1161,6 @@ I use lsp-mode for language-server-protocol support.
     (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))
 
   (use-package lsp-ui
-    :ensure t
     :after lsp-mode
     :demand t
     :hook
@@ -1264,8 +1191,7 @@ I use lsp-mode for language-server-protocol support.
   ;; Some C/C++ settings
   (require 'lsp-mode)
   (require 'lsp-clients)
-  (use-package clang-format
-    :ensure t)
+  (use-package clang-format)
 
   (defun clang-format-save-hook-for-this-buffer ()
     "Create a buffer local save hook."
@@ -1285,7 +1211,6 @@ I use lsp-mode for language-server-protocol support.
   (add-hook 'c++-mode-hook 'lsp)
 
   (use-package ccls
-    :ensure t
     :hook ((c-mode c++-mode objc-mode) .
            (lambda () (require 'ccls) (lsp))))
   (setq ccls-executable "c:/prj/ccls/Release/ccls.exe")
@@ -1295,7 +1220,6 @@ I use lsp-mode for language-server-protocol support.
 
   ;; Use clang for formatting and flycheck in C/C++.
   (use-package flycheck-clang-analyzer
-    :ensure t
     :after flycheck
     :config (flycheck-clang-analyzer-setup))
 
@@ -1313,7 +1237,6 @@ I use lsp-mode for language-server-protocol support.
   (add-hook 'python-mode-hook 'smartparens-mode)
 
   (use-package lsp-python-ms
-    :ensure t
     :init (setq lsp-python-ms-auto-install-server t)
     :hook (python-mode . (lambda ()
                            (setq-default tab-width 4)
@@ -1323,7 +1246,6 @@ I use lsp-mode for language-server-protocol support.
   ;; virtualenvwrapper
   (use-package virtualenvwrapper
     :hook python-mode
-    :ensure t
     :demand t
     :config
     ;; virtualenvwrapper init for eshell and interactive shell.
@@ -1336,15 +1258,11 @@ I use lsp-mode for language-server-protocol support.
 
   ;; py-isort
   (use-package py-isort
-    :defer t
     :hook
-    (python-mode . (lambda () (add-hook 'before-save-hook 'py-isort-before-save)))
-    :ensure t)
+    (python-mode . (lambda () (add-hook 'before-save-hook 'py-isort-before-save))))
 
   ;; yapf
   (use-package yapfify
-    :defer t
-    :ensure t
     :hook
     (python-mode . yapf-mode))
 #+END_SRC
@@ -1379,7 +1297,6 @@ I use lsp-mode for language-server-protocol support.
 ** Java
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-java
-    :ensure t
     :demand t
     :config
     (setq lsp-java-format-enabled nil
@@ -1414,7 +1331,6 @@ I use lsp-mode for language-server-protocol support.
 ** SQL
 #+BEGIN_SRC emacs-lisp
   (use-package sqlup-mode
-    :ensure t
     :hook
     (sql-mode . sqlup-mode))
 
@@ -1467,6 +1383,50 @@ I use lsp-mode for language-server-protocol support.
     (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
     (add-to-list 'auto-mode-alist '("/\\(views\\|html\\|theme\\|templates\\)/.*\\.php\\'" . web-mode)))
 #+end_src
+* Org Config setup
+#+BEGIN_SRC emacs-lisp
+  ;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
+  (defun my/tangle-dotfiles ()
+    "If the current file is this file, the code blocks are tangled"
+    (when (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org"))
+      (org-babel-tangle nil "~/.emacs.d/config.el")
+      (byte-compile-file "~/.emacs.d/config.el")))
+
+  (add-hook 'after-save-hook #'my/tangle-dotfiles)
+
+  ;; Snippet for writing elisp like everywhere around this file.
+
+  (use-package org
+    :hook
+    ((org-mode . org-indent-mode)
+     (org-mode . smartparens-mode))
+
+    :config
+    (add-to-list 'org-structure-template-alist
+                 '("el" . "src emacs-lisp"))
+    (require 'org-tempo)
+    (setq org-src-fontify-natively t
+          org-src-tab-acts-natively t
+          org-confirm-babel-evaluate nil
+          org-export-with-smart-quotes t))
+
+  ;; Convert a buffer and associated decorations to HTML.
+  (use-package htmlize)
+
+  ;; Don't show temp buffers like *compile-log*
+  (setq temp-buffer-show-function (function ignore))
+
+  ;; from enberg on #emacs
+  (add-hook 'compilation-finish-functions
+            (lambda (buf str)
+              (if (null (string-match ".*exited abnormally.*" str))
+                  ;;no errors, make the compilation window go away in a few seconds
+                  (progn
+                    (run-at-time
+                     "1 sec" nil 'delete-windows-on
+                     (get-buffer-create "*compilation*"))
+                    (message "No Compilation Errors!")))))
+#+END_SRC
 * Overrides
 #+BEGIN_SRC emacs-lisp
   (load "~/.emacs.d/zz-overrides")
