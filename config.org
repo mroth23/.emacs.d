@@ -737,8 +737,9 @@ Use mood-line.
     :after helm)
 
   (use-package helm-ag
-    :custom
-    (helm-ag-base-command "rg --no-heading --pcre2 --color=never --vimgrep"))
+    ; :custom
+    ;(helm-ag-base-command "rg --no-heading --pcre2 --color=never --vimgrep --smart-case")
+  )
 #+END_SRC
 ** dot-mode
 #+BEGIN_SRC emacs-lisp
@@ -763,10 +764,8 @@ Use mood-line.
   (when window-system
     (use-package pretty-mode
       :demand t
-      :config
-      (global-pretty-mode t)))
-
-  (global-prettify-symbols-mode +1)
+      :hook
+      (haskell-mode . (pretty-mode prettify-symbols-mode))))
 #+END_SRC
 ** yasnippet
 #+BEGIN_SRC emacs-lisp
@@ -779,6 +778,7 @@ Use mood-line.
 
   (use-package auto-yasnippet
     :after yasnippet
+    :commands (aya-expand aya-open-line aya-create aya-yank-snippet aya-persist-snippet aya-create-one-line)
     :bind
     ("C-o" . aya-open-line)
     :config
@@ -1135,6 +1135,7 @@ I use lsp-mode for language-server-protocol support.
       c-mode
       objc-mode
       java-mode) . lsp)
+    :commands (lsp lsp-deferred)
     :bind
     (:map lsp-mode-map
           ("C-c l j" . moo-javadoc)
@@ -1154,6 +1155,7 @@ I use lsp-mode for language-server-protocol support.
      lsp-enable-text-document-color nil
      lsp-enable-semantic-highlighting nil
      lsp-enable-links nil
+     lsp-before-save-edits nil
      lsp-signature-auto-activate nil
      lsp-prefer-capf t)
     :config
@@ -1162,7 +1164,7 @@ I use lsp-mode for language-server-protocol support.
 
   (use-package lsp-ui
     :after lsp-mode
-    :demand t
+    :commands (lsp-ui-mode)
     :hook
     ((c++-mode
       c-mode

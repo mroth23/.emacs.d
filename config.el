@@ -611,8 +611,9 @@
   :after helm)
 
 (use-package helm-ag
-  :custom
-  (helm-ag-base-command "rg --no-heading --pcre2 --color=never --vimgrep"))
+  ; :custom
+  ;(helm-ag-base-command "rg --no-heading --pcre2 --color=never --vimgrep --smart-case")
+)
 
 (use-package dot-mode
   :config
@@ -631,9 +632,8 @@
 (when window-system
   (use-package pretty-mode
     :demand t
-    (global-pretty-mode t)))
-
-(global-prettify-symbols-mode +1)
+    :hook
+    (haskell-mode . (pretty-mode prettify-symbols-mode))))
 
 (use-package yasnippet
   :config
@@ -644,6 +644,7 @@
 
 (use-package auto-yasnippet
   :after yasnippet
+  :commands (aya-expand aya-open-line aya-create aya-yank-snippet aya-persist-snippet aya-create-one-line)
   :bind
   ("C-o" . aya-open-line)
   :config
@@ -949,6 +950,7 @@ The point should be inside the method to generate docs for"
     c-mode
     objc-mode
     java-mode) . lsp)
+  :commands (lsp lsp-deferred)
   :bind
   (:map lsp-mode-map
         ("C-c l j" . moo-javadoc)
@@ -968,6 +970,7 @@ The point should be inside the method to generate docs for"
    lsp-enable-text-document-color nil
    lsp-enable-semantic-highlighting nil
    lsp-enable-links nil
+   lsp-before-save-edits nil
    lsp-signature-auto-activate nil
    lsp-prefer-capf t)
   :config
@@ -976,7 +979,7 @@ The point should be inside the method to generate docs for"
 
 (use-package lsp-ui
   :after lsp-mode
-  :demand t
+  :commands (lsp-ui-mode)
   :hook
   ((c++-mode
     c-mode
