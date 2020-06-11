@@ -104,6 +104,32 @@
 (column-number-mode t)
 (size-indication-mode t)
 
+(use-package outline
+  :ensure nil ; built-in
+  :hook
+  (prog-mode . outline-minor-mode))
+
+(use-package bicycle
+  :commands (bicycle-cycle bicycle-cycle-global)
+  :after outline
+  :bind (:map outline-minor-mode-map
+              ([C-tab] . bicycle-cycle)
+              ([S-tab] . bicycle-cycle-global)))
+
+(use-package outline-minor-faces
+  :commands (outline-minor-faces-add-font-lock-keywords)
+  :after outline
+  :hook (outline-minor-mode . outline-minor-faces-add-font-lock-keywords))
+
+(add-hook 'python-mode-hook
+          (lambda ()
+            (setq outline-regexp
+                  (rx (or
+                       ;; Definitions
+                       (group (group (* space)) bow (or "class" "def") eow)
+                       ;; Decorators
+                       (group (group (* space)) "@"))))))
+
 ;; Instead of setting gc-cons-threshold, use gcmh.
 (use-package gcmh
   :init
@@ -687,7 +713,8 @@ The point should be inside the method to generate docs for"
       (aya-expand))))
 
 (use-package magit
-  :commands (magit-status magit-dispatch magit-inside-worktree-p)
+  :commands
+  (magit-status magit-dispatch magit-inside-worktree-p magit-after-save-refresh-status)
   :bind
   (("C-x g"   . magit-status)
    ("C-x M-g" . magit-dispatch))
@@ -699,10 +726,7 @@ The point should be inside the method to generate docs for"
           (if (magit-inside-worktree-p t)
               (add-hook
                'after-save-hook
-               magit-after-save-refresh-status t t))))
-
-;; (use-package gitconfig-mode)
-;; (use-package gitignore-mode)
+               'magit-after-save-refresh-status t t))))
 
 (use-package forge
   :after magit)
@@ -731,49 +755,9 @@ The point should be inside the method to generate docs for"
   (setq magit-diff-options (remove "-w" magit-diff-options))
   (magit-refresh))
 
-(use-package vimish-fold
-  ; :config (add-hook 'prog-mode-hook 'vimish-fold-mode)
-  )
-
-(bind-key "s-a" (defhydra hydra-vimish-fold
-                  (:color blue
-                          :columns 3)
-                  "fold"
-                  ("a" vimish-fold-avy "avy")
-                  ("d" vimish-fold-delete "del")
-                  ("D" vimish-fold-delete-all "del-all")
-                  ("u" vimish-fold-unfold "undo")
-                  ("U" vimish-fold-unfold-all "undo-all")
-                  ("s" vimish-fold "fold")
-                  ("r" vimish-fold-refold "refold")
-                  ("R" vimish-fold-refold-all "refold-all")
-                  ("t" vimish-fold-toggle "toggle" :exit nil)
-                  ("T" vimish-fold-toggle-all "toggle-all" :exit nil)
-                  ("j" vimish-fold-next-fold "down" :exit nil)
-                  ("k" vimish-fold-previous-fold "up" :exit nil)
-                  ("q" nil "quit")))
-
-;; (use-package hideshow-org
-;;   :ensure t
-;;   :config
-;;   ()
-;;   (add-hook 'prog-mode-hook 'hs-org/minor-mode))
-
 (with-eval-after-load 'god-mode
   (define-key god-local-mode-map (kbd "i") 'god-local-mode)
   (define-key god-local-mode-map (kbd ".") 'repeat))
-
-(use-package sx
-  :config
-  (bind-keys :prefix "C-c q"
-             :prefix-map my-sx-map
-             :prefix-docstring "Global keymap for SX."
-             ("q" . sx-tab-all-questions)
-             ("i" . sx-inbox)
-             ("o" . sx-open-link)
-             ("u" . sx-tab-unanswered-my-tags)
-             ("a" . sx-ask)
-             ("s" . sx-search)))
 
 (use-package nhexl-mode
   :defer t)
@@ -786,16 +770,6 @@ The point should be inside the method to generate docs for"
 ;;    '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
 ;;   (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo"))
 ;; (pdf-tools-install)
-
-(use-package outshine
-  :hook
-  ((emacs-lisp-mode . outshine-mode)
-   (LaTeX-mode . outshine-mode)
-   (picolisp-mode . outshine-mode)
-   (clojure-mode . outshine-mode)
-   (ess-mode . outshine-mode)
-   (ledger-mode . outshine-mode)
-   (python-mode . outshine-mode)))
 
 (use-package treemacs
   :config
@@ -1077,7 +1051,7 @@ The point should be inside the method to generate docs for"
 ;; py-isort
 (use-package py-isort
   :hook
-  (python-mode . (lambda () (add-hook 'before-save-hook 'py-isort-before-save))))
+  (python-mode . (lambda () (add-hook 'before-save-hook 'py-isort-before-save t t))))
 
 ;; yapf
 (use-package yapfify
@@ -1196,18 +1170,19 @@ The point should be inside the method to generate docs for"
 ;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
 (defun my/tangle-dotfiles ()
   "If the current file is this file, the code blocks are tangled"
-  (when (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org"))
+  (interactive)
+  (when (or (equal (buffer-file-name) (file-truename "~/.emacs.d/config.org"))
+            (equal (buffer-file-name) (expand-file-name "~/.emacs.d/config.org")))
     (org-babel-tangle nil "~/.emacs.d/config.el")
     (byte-compile-file "~/.emacs.d/config.el")))
-
-(add-hook 'after-save-hook #'my/tangle-dotfiles)
 
 ;; Snippet for writing elisp like everywhere around this file.
 
 (use-package org
   :hook
   ((org-mode . org-indent-mode)
-   (org-mode . smartparens-mode))
+   (org-mode . smartparens-mode)
+   (after-save . my/tangle-dotfiles))
 
   :config
   (add-to-list 'org-structure-template-alist
