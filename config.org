@@ -7,6 +7,92 @@ keybinds, the mode line and more.
 
 In the second section, there's major-mode specific settings for those modes that are important
 to me.
+* Contents
+:PROPERTIES:
+:TOC:      :include all :depth 4
+:END:
+:CONTENTS:
+- [[#overview][Overview]]
+- [[#contents][Contents]]
+- [[#uiglobal][UI/global]]
+  - [[#darwin][Darwin]]
+  - [[#windows][Windows]]
+  - [[#linux][Linux]]
+  - [[#built-in-modes][Built-in modes]]
+    - [[#lines-and-editing][Lines and editing]]
+    - [[#misc][Misc]]
+    - [[#recentf][recentf]]
+    - [[#tramp][Tramp]]
+    - [[#dired][dired]]
+    - [[#ediff][ediff]]
+    - [[#midnight][midnight]]
+    - [[#re-builder][re-builder]]
+    - [[#winner-mode][winner-mode]]
+    - [[#mode-line][Mode line]]
+  - [[#performance][Performance]]
+  - [[#crux][Crux]]
+  - [[#dashboard][Dashboard]]
+  - [[#projectile][Projectile]]
+  - [[#theme][Theme]]
+  - [[#scrolling][Scrolling]]
+  - [[#shortcuts--keybinds][Shortcuts / keybinds]]
+    - [[#key-chords][key-chords]]
+    - [[#which-key][which-key]]
+    - [[#iy-go-to-char][iy-go-to-char]]
+    - [[#hydra][Hydra]]
+    - [[#switch-window][switch-window]]
+    - [[#multiple-cursors][multiple-cursors]]
+    - [[#kill-word][kill-word]]
+    - [[#copy-whole-line][copy-whole-line]]
+    - [[#all-over-the-screen][All over the screen]]
+    - [[#global-keybinds][Global keybinds]]
+    - [[#smartrep][smartrep]]
+    - [[#end-line-with][end-line-with]]
+  - [[#avy][avy]]
+  - [[#anzu][anzu]]
+  - [[#modeline][Modeline]]
+    - [[#nyan-cat-mode][Nyan cat mode]]
+    - [[#mode-line][Mode line]]
+    - [[#clock-and-battery][Clock and battery]]
+    - [[#line-and-column-numbers][Line and column numbers]]
+  - [[#company][Company]]
+  - [[#dotenv-mode][dotenv-mode]]
+  - [[#helm][Helm]]
+  - [[#dot-mode][dot-mode]]
+  - [[#rainbow-delimiters][rainbow-delimiters]]
+  - [[#pretty-symbols][pretty-symbols]]
+  - [[#yasnippet][yasnippet]]
+  - [[#magit][magit]]
+  - [[#vimish-fold][vimish-fold]]
+  - [[#hideshow][hideshow]]
+  - [[#god-mode][god mode]]
+  - [[#stackexchange--sx][StackExchange / sx]]
+  - [[#nhexl][nhexl]]
+  - [[#pdf-tools][pdf-tools]]
+  - [[#outshine][outshine]]
+  - [[#treemacs][Treemacs]]
+  - [[#uniquify][Uniquify]]
+  - [[#editing][Editing]]
+    - [[#whitespace-mode][whitespace-mode]]
+    - [[#super-save][super-save]]
+    - [[#smartparens][smartparens]]
+    - [[#expand-region][expand-region]]
+    - [[#browse-kill-ring][browse-kill-ring]]
+    - [[#tabs--indentation][Tabs / Indentation]]
+    - [[#easy-kill][easy-kill]]
+    - [[#hl-todo][hl-todo]]
+  - [[#flycheck][flycheck]]
+- [[#language-specific-config][Language specific config]]
+  - [[#lsp][LSP]]
+  - [[#cc][C/C++]]
+  - [[#python][Python]]
+  - [[#cperl][CPerl]]
+  - [[#java][Java]]
+  - [[#sql][SQL]]
+  - [[#web][Web]]
+- [[#org-config-setup][Org Config setup]]
+- [[#overrides][Overrides]]
+:END:
 * UI/global
 ** Darwin
 Custom configuration for Mac OSX.
@@ -825,14 +911,19 @@ Extra magit settings. I refresh the magit buffer on file save because it's
 annoying to do so manually. Also, use forge for GitHub integration in Magit.
 #+BEGIN_SRC emacs-lisp
   (use-package magit
-    :commands (magit-status magit-dispatch)
+    :commands (magit-status magit-dispatch magit-inside-worktree-p)
     :bind
     (("C-x g"   . magit-status)
      ("C-x M-g" . magit-dispatch))
-    :hook
-    (after-save . magit-after-save-refresh-status)
     :config
     (define-key magit-status-mode-map (kbd "Q") 'magit-toggle-whitespace))
+
+  (add-hook 'prog-mode-hook
+            (lambda ()
+            (if (magit-inside-worktree-p t)
+                (add-hook
+                 'after-save-hook
+                 magit-after-save-refresh-status t t))))
 
   ;; (use-package gitconfig-mode)
   ;; (use-package gitignore-mode)
@@ -867,7 +958,8 @@ annoying to do so manually. Also, use forge for GitHub integration in Magit.
 ** vimish-fold
 #+BEGIN_SRC emacs-lisp
   (use-package vimish-fold
-    :config (add-hook 'prog-mode-hook 'vimish-fold-mode))
+    ; :config (add-hook 'prog-mode-hook 'vimish-fold-mode)
+    )
 
   (bind-key "s-a" (defhydra hydra-vimish-fold
                     (:color blue
@@ -935,7 +1027,6 @@ Note that this is a minor mode. Defer loading until actually used.
 ** outshine
 #+BEGIN_SRC emacs-lisp
   (use-package outshine
-    :defer t
     :hook
     ((emacs-lisp-mode . outshine-mode)
      (LaTeX-mode . outshine-mode)
@@ -1411,6 +1502,8 @@ I use lsp-mode for language-server-protocol support.
           org-src-tab-acts-natively t
           org-confirm-babel-evaluate nil
           org-export-with-smart-quotes t))
+
+  (use-package org-make-toc)
 
   ;; Convert a buffer and associated decorations to HTML.
   (use-package htmlize)

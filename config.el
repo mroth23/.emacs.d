@@ -687,14 +687,19 @@ The point should be inside the method to generate docs for"
       (aya-expand))))
 
 (use-package magit
-  :commands (magit-status magit-dispatch)
+  :commands (magit-status magit-dispatch magit-inside-worktree-p)
   :bind
   (("C-x g"   . magit-status)
    ("C-x M-g" . magit-dispatch))
-  :hook
-  (after-save . magit-after-save-refresh-status)
   :config
   (define-key magit-status-mode-map (kbd "Q") 'magit-toggle-whitespace))
+
+(add-hook 'prog-mode-hook
+          (lambda ()
+          (if (magit-inside-worktree-p t)
+              (add-hook
+               'after-save-hook
+               magit-after-save-refresh-status t t))))
 
 ;; (use-package gitconfig-mode)
 ;; (use-package gitignore-mode)
@@ -727,7 +732,8 @@ The point should be inside the method to generate docs for"
   (magit-refresh))
 
 (use-package vimish-fold
-  :config (add-hook 'prog-mode-hook 'vimish-fold-mode))
+  ; :config (add-hook 'prog-mode-hook 'vimish-fold-mode)
+  )
 
 (bind-key "s-a" (defhydra hydra-vimish-fold
                   (:color blue
@@ -782,7 +788,6 @@ The point should be inside the method to generate docs for"
 ;; (pdf-tools-install)
 
 (use-package outshine
-  :defer t
   :hook
   ((emacs-lisp-mode . outshine-mode)
    (LaTeX-mode . outshine-mode)
@@ -1212,6 +1217,8 @@ The point should be inside the method to generate docs for"
         org-src-tab-acts-natively t
         org-confirm-babel-evaluate nil
         org-export-with-smart-quotes t))
+
+(use-package org-make-toc)
 
 ;; Convert a buffer and associated decorations to HTML.
 (use-package htmlize)
