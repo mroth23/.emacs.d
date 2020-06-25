@@ -52,9 +52,12 @@
     (exec-path-from-shell-initialize)))
 
 (global-hl-line-mode +1)
-(global-visual-line-mode +1)
 (global-display-line-numbers-mode)
 (blink-cursor-mode 0)
+
+;; Only enable visual line mode in programming modes
+(add-hook 'prog-mode-hook
+  (lambda () (visual-line-mode t)))
 
 (setq ring-bell-function 'ignore)
 (set-default 'imenu-auto-rescan t)
@@ -64,6 +67,10 @@
   :config
   (add-to-list 'recentf-exclude no-littering-var-directory)
   (add-to-list 'recentf-exclude no-littering-etc-directory)
+  (add-to-list 'recentf-exclude (expand-file-name "elpa/" user-emacs-directory))
+  (add-to-list 'recentf-exclude (file-truename no-littering-var-directory))
+  (add-to-list 'recentf-exclude (file-truename no-littering-etc-directory))
+  (add-to-list 'recentf-exclude (file-truename (expand-file-name "elpa/" user-emacs-directory)))
   (setq recentf-max-saved-items 500
         recentf-max-menu-items 15
         ;; disable recentf-cleanup on Emacs start, because it can cause
@@ -104,31 +111,31 @@
 (column-number-mode t)
 (size-indication-mode t)
 
-(use-package outline
-  :ensure nil ; built-in
-  :hook
-  (prog-mode . outline-minor-mode))
+;; (use-package outline
+;;   :ensure nil ; built-in
+;;   :hook
+;;   (prog-mode . outline-minor-mode))
 
-(use-package bicycle
-  :commands (bicycle-cycle bicycle-cycle-global)
-  :after outline
-  :bind (:map outline-minor-mode-map
-              ([C-tab] . bicycle-cycle)
-              ([S-tab] . bicycle-cycle-global)))
+;; (use-package bicycle
+;;   :commands (bicycle-cycle bicycle-cycle-global)
+;;   :after outline
+;;   :bind (:map outline-minor-mode-map
+;;               ([C-tab] . bicycle-cycle)
+;;               ([S-tab] . bicycle-cycle-global)))
 
-(use-package outline-minor-faces
-  :commands (outline-minor-faces-add-font-lock-keywords)
-  :after outline
-  :hook (outline-minor-mode . outline-minor-faces-add-font-lock-keywords))
+;; (use-package outline-minor-faces
+;;   :commands (outline-minor-faces-add-font-lock-keywords)
+;;   :after outline
+;;   :hook (outline-minor-mode . outline-minor-faces-add-font-lock-keywords))
 
-(add-hook 'python-mode-hook
-          (lambda ()
-            (setq outline-regexp
-                  (rx (or
-                       ;; Definitions
-                       (group (group (* space)) bow (or "class" "def") eow)
-                       ;; Decorators
-                       (group (group (* space)) "@"))))))
+;; (add-hook 'python-mode-hook
+;;           (lambda ()
+;;             (setq outline-regexp
+;;                   (rx (or
+;;                        ;; Definitions
+;;                        (group (group (* space)) bow (or "class" "def") eow)
+;;                        ;; Decorators
+;;                        (group (group (* space)) "@"))))))
 
 ;; Instead of setting gc-cons-threshold, use gcmh.
 (use-package gcmh
@@ -525,11 +532,11 @@
   :hook
   (prog-mode . company-mode)
   :config
-  (setq company-minimum-prefix-length 3)
-  (setq company-idle-delay 0.4)
+  (setq company-minimum-prefix-length 1)
+  (setq company-idle-delay 0.0)
   (setq company-tooltip-limit 15)
   (setq company-backends (delete 'company-semantic company-backends))
-  (setq company-tooltip-align-annotations t)
+  (setq company-tooltip-align-lsp-annotations t)
   (setq company-tooltip-flip-when-above t)
   (add-to-list 'company-backends 'company-dabbrev))
 
@@ -657,9 +664,9 @@
 
 (when window-system
   (use-package pretty-mode
-    :demand t
+    :commands (turn-on-pretty-mode turn-off-pretty-mode)
     :hook
-    (haskell-mode . (pretty-mode prettify-symbols-mode))))
+    (haskell-mode . (turn-on-pretty-mode prettify-symbols-mode))))
 
 (use-package yasnippet
   :config
@@ -733,9 +740,9 @@ The point should be inside the method to generate docs for"
 
 (use-package diff-hl
   :hook
-  ((magit-pre-refresh . diff-hl-magit-pre-refresh)
+  ((magit-pre-refresh  . diff-hl-magit-pre-refresh)
    (magit-post-refresh . diff-hl-magit-post-refresh)
-   (dired-mode . diff-hl-dired-mode))
+   (dired-mode         . diff-hl-dired-mode))
   :config
   (global-diff-hl-mode +1))
 
@@ -939,6 +946,7 @@ The point should be inside the method to generate docs for"
         ("C-c l d" . lsp-describe-thing-at-point)
         ("C-c l h" . lsp-treemacs-call-hierarchy))
   :init
+  (setq read-process-output-max (* 1024 1024))
   (setq
    lsp-keymap-prefix "C-c l"
    lsp-eldoc-render-all nil
@@ -953,7 +961,6 @@ The point should be inside the method to generate docs for"
    lsp-signature-auto-activate nil
    lsp-prefer-capf t)
   :config
-  (setq-local read-process-output-max (* 1024 1024))
   (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))
 
 (use-package lsp-ui
@@ -1193,7 +1200,9 @@ The point should be inside the method to generate docs for"
         org-confirm-babel-evaluate nil
         org-export-with-smart-quotes t))
 
-(use-package org-make-toc)
+(use-package org-make-toc
+  :hook
+  (org-mode . org-make-toc-mode))
 
 ;; Convert a buffer and associated decorations to HTML.
 (use-package htmlize)
@@ -1213,3 +1222,5 @@ The point should be inside the method to generate docs for"
                   (message "No Compilation Errors!")))))
 
 (load "~/.emacs.d/zz-overrides")
+(load "~/.emacs.d/elpa/explain-pause-mode/explain-pause-mode")
+(explain-pause-mode t)
