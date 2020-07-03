@@ -644,9 +644,9 @@
   :after helm)
 
 (use-package helm-ag
-  ; :custom
-  ;(helm-ag-base-command "rg --no-heading --pcre2 --color=never --vimgrep --smart-case")
-)
+  :custom
+  (helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline")
+  (helm-ag-success-exit-status '(0 2)))
 
 (use-package dot-mode
   :config
@@ -823,8 +823,12 @@ The point should be inside the method to generate docs for"
   (goto-char beg))
 
 (global-set-key (kbd "C-:") 'me/eval-region-and-kill-mark)
-(global-set-key (kbd "M-n") 'move-text-down)
-(global-set-key (kbd "M-p") 'move-text-up)
+
+(use-package move-text
+  :commands (move-text-up move-text-down)
+  :bind
+   (("M-n" . move-text-down)
+    ("M-p" . move-text-up)))
 
 ;; https://www.masteringemacs.org/article/fixing-mark-commands-transient-mark-mode
 (defun push-mark-no-activate ()
@@ -862,8 +866,8 @@ The point should be inside the method to generate docs for"
 (require 'whitespace)
 ;; Mark lines exceeding 120 columns.
 (setq whitespace-line-column 120)
-;; Set whitespace style: cleanup empty lines / trailing whitespace, show whitespace characters.
-(setq whitespace-style '(empty trailing face lines-tail indentation::space tabs newline tab-mark newline-mark))
+;; Set whitespace style: cleanup empty lines / trailing whitespace, show whitespace characters
+(setq whitespace-style '(empty trailing face lines-tail space-mark tab-mark newline newline-mark))
 ;; Use spaces instead of tabs by default.
 (setq-default indent-tabs-mode nil)
 (setq require-final-newline t)
@@ -890,6 +894,7 @@ The point should be inside the method to generate docs for"
 ;; I never got smartparens to work properly with cc-mode (formatting etc). So I use the builtins instead, which work nicely.
 (defun disable-smartparens ()
   (smartparens-mode 0)
+  (show-paren-mode 1)
   (electric-pair-mode 1))
 
 (add-hook 'c-mode-common-hook 'disable-smartparens)
