@@ -856,8 +856,19 @@ Use mood-line.
 
   (use-package helm-ag
     :custom
-    (helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline")
-    (helm-ag-success-exit-status '(0 2)))
+    (helm-ag-base-command "ag -U --vimgrep")
+    ;; (helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline --glob-case-insensitive")
+    ;; (helm-ag-success-exit-status '(0 2))
+    :bind
+    ;; Map C-c p s r to search with ripgrep, but using helm-ag interface
+    (:map projectile-command-map
+     ("s r" . (lambda ()
+                (interactive)
+                (setq helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline --glob-case-insensitive")
+                (setq helm-ag-success-exit-status '(0 2))
+                (helm-projectile-ag)
+                (setq helm-ag-base-command "ag -U --vimgrep")
+                (setq helm-ag-success-exit-status nil)))))
 #+END_SRC
 ** dot-mode
 #+BEGIN_SRC emacs-lisp
@@ -1504,4 +1515,6 @@ I use lsp-mode for language-server-protocol support.
 * Overrides
 #+BEGIN_SRC emacs-lisp
   (load "~/.emacs.d/zz-overrides")
+  ;; (load "~/.emacs.d/elpa/explain-pause-mode/explain-pause-mode")
+  ;; (explain-pause-mode t)
 #+END_SRC

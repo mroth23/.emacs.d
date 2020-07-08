@@ -645,8 +645,19 @@
 
 (use-package helm-ag
   :custom
-  (helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline")
-  (helm-ag-success-exit-status '(0 2)))
+  (helm-ag-base-command "ag -U --vimgrep")
+  ;; (helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline --glob-case-insensitive")
+  ;; (helm-ag-success-exit-status '(0 2))
+  :bind
+  ;; Map C-c p s r to search with ripgrep, but using helm-ag interface
+  (:map projectile-command-map
+   ("s r" . (lambda ()
+              (interactive)
+              (setq helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline --glob-case-insensitive")
+              (setq helm-ag-success-exit-status '(0 2))
+              (helm-projectile-ag)
+              (setq helm-ag-base-command "ag -U --vimgrep")
+              (setq helm-ag-success-exit-status nil)))))
 
 (use-package dot-mode
   :config
@@ -1227,5 +1238,5 @@ The point should be inside the method to generate docs for"
                   (message "No Compilation Errors!")))))
 
 (load "~/.emacs.d/zz-overrides")
-(load "~/.emacs.d/elpa/explain-pause-mode/explain-pause-mode")
-(explain-pause-mode t)
+;; (load "~/.emacs.d/elpa/explain-pause-mode/explain-pause-mode")
+;; (explain-pause-mode t)
