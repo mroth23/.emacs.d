@@ -26,6 +26,8 @@
 (setq initial-scratch-message "")
 
 (tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
 
 ;; Definitions
 (defvar mr-emacs-dir (expand-file-name user-emacs-directory)

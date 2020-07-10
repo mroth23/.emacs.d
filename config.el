@@ -169,7 +169,7 @@
 (use-package dashboard
   :config
   (dashboard-setup-startup-hook)
-  (setq dashboard-items '((recents  . 5)
+  (setq dashboard-items '((recents  . 10)
                           (projects . 5)))
   (setq dashboard-banner-logo-title "")
   (add-to-list 'dashboard-items '(agenda) t))
