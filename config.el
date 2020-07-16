@@ -944,7 +944,7 @@ The point should be inside the method to generate docs for"
     flycheck-command-map))
 
 (use-package helm-lsp
-  :commands helm-lsp-workspace-symbol)
+  :commands helm-lsp-workspace-symbol helm-lsp-code-actions)
 
 (use-package lsp-mode
   :hook
@@ -955,6 +955,7 @@ The point should be inside the method to generate docs for"
   :commands (lsp lsp-deferred)
   :bind
   (:map lsp-mode-map
+        ("M-/"     . helm-lsp-code-actions)
         ("C-c l j" . moo-javadoc)
         ("C-c l o" . lsp-organize-imports)
         ("C-c l r" . lsp-rename)
