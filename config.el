@@ -222,7 +222,7 @@
 (use-package switch-window
   ;; Override global key bindings for switching windows.
   :bind
-  (("C-x o" . switch-window)
+  (("C-x o" . ace-window)
    ("C-x 1" . switch-window-then-maximize)
    ("C-x 2" . switch-window-then-split-below)
    ("C-x 3" . switch-window-then-split-right)
@@ -741,7 +741,7 @@ The point should be inside the method to generate docs for"
 
 (add-hook 'prog-mode-hook
           (lambda ()
-          (if (magit-inside-worktree-p t)
+          (if (and (magit-inside-worktree-p t) (not (eq system-type 'windows-nt)))
               (add-hook
                'after-save-hook
                'magit-after-save-refresh-status t t))))
@@ -892,6 +892,11 @@ The point should be inside the method to generate docs for"
   (setq super-save-auto-save-when-idle t)
   (setq auto-save-default nil))
 
+(setq backup-directory-alist
+      `((".*" . ,temporary-file-directory)))
+(setq auto-save-file-name-transforms
+      `((".*" ,temporary-file-directory t)))
+
 (use-package smartparens
   :demand t
   :config
@@ -947,6 +952,7 @@ The point should be inside the method to generate docs for"
   :commands helm-lsp-workspace-symbol helm-lsp-code-actions)
 
 (use-package lsp-mode
+  :demand t
   :hook
   ((c++-mode
     c-mode
@@ -964,21 +970,28 @@ The point should be inside the method to generate docs for"
         ("C-c l h" . lsp-treemacs-call-hierarchy))
   :init
   (setq read-process-output-max (* 1024 1024))
-  (setq
-   lsp-keymap-prefix "C-c l"
-   lsp-eldoc-render-all nil
-   lsp-enable-on-type-formatting nil
-   lsp-enable-indentation nil
-   lsp-enable-file-watchers nil
-   lsp-enable-folding nil
-   lsp-enable-text-document-color nil
-   lsp-enable-semantic-highlighting nil
-   lsp-enable-links nil
-   lsp-before-save-edits nil
-   lsp-signature-auto-activate nil
-   lsp-prefer-capf t)
+  :custom
+  (lsp-keymap-prefix "C-c l")
+  (lsp-before-save-edits nil)
+  (lsp-eldoc-render-all nil)
+  (lsp-enable-file-watchers nil)
+  (lsp-enable-folding nil)
+  (lsp-enable-indentation nil)
+  (lsp-enable-links nil)
+  (lsp-enable-on-type-formatting nil)
+  (lsp-enable-semantic-highlighting nil)
+  (lsp-enable-text-document-color nil)
+  (lsp-modeline-code-actions-enable nil)
+  (lsp-modeline-diagnostics-enable nil)
+  ;; (lsp-prefer-capf t)
+  (lsp-signature-auto-activate nil)
   :config
+  (require 'lsp-modeline)
   (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))
+
+(use-package lsp-treemacs
+  :demand t
+  :after lsp)
 
 (use-package lsp-ui
   :after lsp-mode
@@ -999,12 +1012,12 @@ The point should be inside the method to generate docs for"
         ("C-c l i" . lsp-ui-peek-find-implementation)
         ("M-#"     . lsp-ui-doc-show)
         ("C-c l m" . lsp-ui-imenu))
-  :config
-  (setq lsp-ui-sideline-enable nil
-        lsp-ui-sideline-update-mode 'line
-        lsp-ui-peek-enable nil
-        lsp-ui-peek-always-show nil
-        lsp-ui-doc-enable nil))
+  :custom
+  (lsp-ui-sideline-enable nil)
+  (lsp-ui-sideline-update-mode 'line)
+  (lsp-ui-peek-enable nil)
+  (lsp-ui-peek-always-show nil)
+  (lsp-ui-doc-enable nil))
 
 ;; Some C/C++ settings
 (require 'lsp-mode)
@@ -1110,11 +1123,11 @@ The point should be inside the method to generate docs for"
 
 (use-package lsp-java
   :demand t
-  :config
-  (setq lsp-java-format-enabled nil
-        lsp-java-signature-help-enabled nil
-        lsp-java-completion-overwrite t
-        lsp-java-autobuild-enabled nil))
+  :custom
+  (lsp-java-format-enabled nil)
+  (lsp-java-signature-help-enabled nil)
+  (lsp-java-completion-overwrite t)
+  (lsp-java-autobuild-enabled nil))
 
 (add-hook 'java-mode-hook '(lambda () (c-set-java-style)))
 

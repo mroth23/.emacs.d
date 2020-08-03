@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: class-function-name
+# key: .cf
+# --
+`(file-name-base (or (buffer-file-name)(buffer-name)))`.`(semantic-tag-name (semantic-current-tag))`$0
