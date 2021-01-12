@@ -5,13 +5,9 @@
       gc-cons-percentage 0.6)
 
 ;; Package setup
-(setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")))
-
-(if (eq system-type 'windows-nt)
-    (add-to-list 'package-archives
-                 '("melpa" . "http://melpa.org/packages/") t)
-  (add-to-list 'package-archives
-               '("melpa" . "https://melpa.org/packages/") t))
+(setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
+                         ("ublt" . "https://elpa.ubolonton.org/packages/")
+                         ("melpa" . "https://melpa.org/packages/")))
 
 (setq package-enable-at-startup nil)
 (setq package-quickstart t)

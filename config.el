@@ -14,7 +14,16 @@
     :config
     (exec-path-from-shell-initialize)))
 
+;; https://web.archive.org/web/20150713053259/http://www.archivum.info/comp.emacs/2007-06/00348/Re-Ignore-%5EM-in-mixed-(LF-and-CR+LF)-line-ended-textfiles.html
+(defun remove-dos-eol ()
+  "Do not show ^M in files containing mixed UNIX and DOS line endings."
+  (interactive)
+  (setq buffer-display-table (make-display-table))
+  (aset buffer-display-table ?\^M []))
+
 (when (eq system-type 'windows-nt)
+  ;; Don't show ^M
+  (add-hook 'text-mode-hook 'remove-dos-eol)
   ;; Performance
   (setq w32-pipe-read-delay 0)
   (setq w32-pipe-buffer-size (* 64 1024)) ;; 64k Buffer Size
@@ -54,6 +63,9 @@
 (global-hl-line-mode +1)
 (global-display-line-numbers-mode)
 (blink-cursor-mode 0)
+(global-display-fill-column-indicator-mode +1)
+(setq fill-column 120)
+(setq-default fill-column 120)
 
 ;; Only enable visual line mode in programming modes
 (add-hook 'prog-mode-hook
@@ -166,11 +178,13 @@
   ("C-c k" . crux-kill-other-buffers)
   ("C-c t" . crux-visit-term-buffer))
 
+(use-package page-break-lines)
+
 (use-package dashboard
   :config
   (dashboard-setup-startup-hook)
   (setq dashboard-items '((recents  . 10)
-                          (projects . 5)))
+                          (projects . 10)))
   (setq dashboard-banner-logo-title "")
   (add-to-list 'dashboard-items '(agenda) t))
 
@@ -218,7 +232,9 @@
 
 (use-package hydra)
 
-;; TODO: move everything here into use-package
+(use-package windmove
+  :config (windmove-default-keybindings))
+
 (use-package switch-window
   ;; Override global key bindings for switching windows.
   :bind
@@ -881,6 +897,7 @@ The point should be inside the method to generate docs for"
 (setq whitespace-style '(empty trailing face lines-tail space-mark tab-mark newline newline-mark))
 ;; Use spaces instead of tabs by default.
 (setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
 (setq require-final-newline t)
 
 (global-whitespace-mode 1)
@@ -971,6 +988,7 @@ The point should be inside the method to generate docs for"
   :init
   (setq read-process-output-max (* 1024 1024))
   :custom
+  (lsp-checker-enable t)
   (lsp-keymap-prefix "C-c l")
   (lsp-before-save-edits nil)
   (lsp-eldoc-render-all nil)
@@ -987,6 +1005,9 @@ The point should be inside the method to generate docs for"
   (lsp-signature-auto-activate nil)
   :config
   (require 'lsp-modeline)
+  (require 'lsp-completion)
+  (require 'lsp-diagnostics)
+  (require 'lsp-headerline)
   (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))
 
 (use-package lsp-treemacs
@@ -1019,9 +1040,21 @@ The point should be inside the method to generate docs for"
   (lsp-ui-peek-always-show nil)
   (lsp-ui-doc-enable nil))
 
+(use-package origami)
+(use-package lsp-origami
+  :hook
+  (lsp-after-open . lsp-origami-try-enable))
+
+;; (use-package tree-sitter
+;;   :hook
+;;   (tree-sitter-after-on . tree-sitter-hl-mode)
+;;   :config
+;;   (global-tree-sitter-mode t))
+
+;; (use-package tree-sitter-langs)
+
 ;; Some C/C++ settings
 (require 'lsp-mode)
-(require 'lsp-clients)
 (use-package clang-format)
 
 (defun clang-format-save-hook-for-this-buffer ()
@@ -1045,7 +1078,7 @@ The point should be inside the method to generate docs for"
   :hook ((c-mode c++-mode objc-mode) .
          (lambda () (require 'ccls) (lsp))))
 (setq ccls-executable "c:/prj/ccls/Release/ccls.exe")
-(setq lsp-diagnostic-package :auto)
+(setq lsp-diagnostic-provider :flycheck)
 (setq-default flycheck-disabled-checkers '(c/c++-clang c/c++-cppcheck c/c++-gcc))
 (setq ccls-args '("--log-file=c:/prj/ccls/ccls.log"))
 
@@ -1121,13 +1154,18 @@ The point should be inside the method to generate docs for"
                               (c-toggle-hungry-state 1)
                               (c-toggle-auto-newline 1)))
 
+(setq lsp-java-java-path (substitute-in-file-name "$JAVA_HOME/bin/java"))
+
 (use-package lsp-java
   :demand t
   :custom
   (lsp-java-format-enabled nil)
   (lsp-java-signature-help-enabled nil)
   (lsp-java-completion-overwrite t)
-  (lsp-java-autobuild-enabled nil))
+  (lsp-java-autobuild-enabled nil)
+  ;; :config
+  ;; (flycheck-add-next-checker 'lsp 'checkstyle-java)
+)
 
 (add-hook 'java-mode-hook '(lambda () (c-set-java-style)))
 
@@ -1151,7 +1189,6 @@ The point should be inside the method to generate docs for"
   :modes (java-mode))
 
 (add-to-list 'flycheck-checkers 'checkstyle-java)
-(flycheck-add-next-checker 'lsp 'checkstyle-java)
 
 (use-package sqlup-mode
   :hook
@@ -1203,6 +1240,21 @@ The point should be inside the method to generate docs for"
   (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("/\\(views\\|html\\|theme\\|templates\\)/.*\\.php\\'" . web-mode)))
+
+(defun setup-tide-mode ()
+    (interactive)
+    (tide-setup)
+    (flycheck-mode +1)
+    (setq flycheck-check-syntax-automatically '(save mode-enabled))
+    (eldoc-mode +1)
+    (tide-hl-identifier-mode +1)
+    (company-mode +1))
+
+(use-package tide
+  :hook
+  ((typescript-mode . setup-tide-mode)
+   (typescript-mode . tide-hl-identifier-mode)
+   (before-save . tide-format-before-save)))
 
 ;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
 (defun my/tangle-dotfiles ()
