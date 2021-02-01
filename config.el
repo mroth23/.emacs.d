@@ -959,7 +959,17 @@ The point should be inside the method to generate docs for"
   :config
   (setq flycheck-checker-error-threshold 5000
         flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list
-        flycheck-check-syntax-automatically '(mode-enabled save))
+        flycheck-check-syntax-automatically '(mode-enabled save)
+        flycheck-error-list-format `[("File" 40)
+                                     ("Line" 5 flycheck-error-list-entry-< :right-align t)
+                                     ("Col" 3 nil :right-align t)
+                                     ("Level" 8 flycheck-error-list-entry-level-<)
+                                     ("ID" 10 t)
+                                     (#("Message (Checker)" 0 7
+                                        (face flycheck-error-list-error-message)
+                                        9 16
+                                        (face flycheck-error-list-checker-name))
+                                      0 t)])
   (define-key flycheck-mode-map flycheck-keymap-prefix nil)
   (setq flycheck-keymap-prefix (kbd "C-c f"))
   (define-key flycheck-mode-map flycheck-keymap-prefix
@@ -1001,8 +1011,11 @@ The point should be inside the method to generate docs for"
   (lsp-enable-text-document-color nil)
   (lsp-modeline-code-actions-enable nil)
   (lsp-modeline-diagnostics-enable nil)
+  (lsp-treemacs-theme "Iconless")
   ;; (lsp-prefer-capf t)
   (lsp-signature-auto-activate nil)
+  (lsp-headerline-breadcrumb-enable-diagnostics nil)
+  (lsp-headerline-breadcrumb-segments '(project file symbols))
   :config
   (require 'lsp-modeline)
   (require 'lsp-completion)
