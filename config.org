@@ -393,10 +393,10 @@ Also enable caching and set sort order to recent files.
 *** iy-go-to-char
 Use iy-go-to-char to jump around in the buffer.
 #+BEGIN_SRC emacs-lisp
-  (use-package iy-go-to-char
-    :chords
-    (("xf" . iy-go-to-char)
-     ("xd" . iy-go-to-char-backward)))
+  ;; (use-package iy-go-to-char
+  ;;   :chords
+  ;;   (("xf" . iy-go-to-char)
+  ;;    ("xd" . iy-go-to-char-backward)))
 #+END_SRC
 *** Hydra
 #+BEGIN_SRC emacs-lisp
@@ -1353,13 +1353,13 @@ I use lsp-mode for language-server-protocol support.
 
   (add-hook 'c++-mode-hook 'lsp)
 
-  (use-package ccls
-    :hook ((c-mode c++-mode objc-mode) .
-           (lambda () (require 'ccls) (lsp))))
-  (setq ccls-executable "c:/prj/ccls/Release/ccls.exe")
+  ;; (use-package ccls
+  ;;   :hook ((c-mode c++-mode objc-mode) .
+  ;;          (lambda () (require 'ccls) (lsp))))
+  ;; (setq ccls-executable "c:/prj/ccls/Release/ccls.exe")
+  ;; (setq ccls-args '("--log-file=c:/prj/ccls/ccls.log"))
   (setq lsp-diagnostic-provider :flycheck)
   (setq-default flycheck-disabled-checkers '(c/c++-clang c/c++-cppcheck c/c++-gcc))
-  (setq ccls-args '("--log-file=c:/prj/ccls/ccls.log"))
 
   ;; Use clang for formatting and flycheck in C/C++.
   (use-package flycheck-clang-analyzer
@@ -1369,9 +1369,18 @@ I use lsp-mode for language-server-protocol support.
   (global-set-key (kbd "C-c x f") 'clang-format-region)
   (global-set-key (kbd "C-c x F") 'clang-format-buffer)
 
-  (setq-default c-default-style "bsd")
+  (defun c-set-c-style ()
+    (interactive)
+    (c-set-style "bsd")
+    (setq c-default-style "bsd")
+    (setq indent-tabs-mode t)
+    (setq tab-width 4)
+    (setq c-basic-offset 4)
+    (add-to-list 'c-hanging-braces-alist '(substatement-open before after)))
 
   (add-hook 'c-mode-common-hook '(lambda () (c-toggle-hungry-state 1) (c-toggle-auto-newline 1) (c-set-style "bsd")))
+  (add-hook 'c++-mode-hook '(lambda () (c-set-c-style)))
+  (add-hook 'c-mode-hook '(lambda () (c-set-c-style)))
 #+END_SRC
 ** Python
 #+BEGIN_SRC emacs-lisp

@@ -225,10 +225,10 @@
   :config
   (which-key-mode +1))
 
-(use-package iy-go-to-char
-  :chords
-  (("xf" . iy-go-to-char)
-   ("xd" . iy-go-to-char-backward)))
+;; (use-package iy-go-to-char
+;;   :chords
+;;   (("xf" . iy-go-to-char)
+;;    ("xd" . iy-go-to-char-backward)))
 
 (use-package hydra)
 
@@ -1083,17 +1083,17 @@ The point should be inside the method to generate docs for"
             ;; Buffer local hook.
             t))
 
-;; (setq lsp-clients-clangd-executable "c:/Program Files/LLVM/bin/clangd.exe")
+(setq lsp-clients-clangd-executable "c:/Users/moroth/scoop/apps/llvm/current/bin/clangd.exe")
 
 (add-hook 'c++-mode-hook 'lsp)
 
-(use-package ccls
-  :hook ((c-mode c++-mode objc-mode) .
-         (lambda () (require 'ccls) (lsp))))
-(setq ccls-executable "c:/prj/ccls/Release/ccls.exe")
+;; (use-package ccls
+;;   :hook ((c-mode c++-mode objc-mode) .
+;;          (lambda () (require 'ccls) (lsp))))
+;; (setq ccls-executable "c:/prj/ccls/Release/ccls.exe")
+;; (setq ccls-args '("--log-file=c:/prj/ccls/ccls.log"))
 (setq lsp-diagnostic-provider :flycheck)
 (setq-default flycheck-disabled-checkers '(c/c++-clang c/c++-cppcheck c/c++-gcc))
-(setq ccls-args '("--log-file=c:/prj/ccls/ccls.log"))
 
 ;; Use clang for formatting and flycheck in C/C++.
 (use-package flycheck-clang-analyzer
@@ -1103,9 +1103,18 @@ The point should be inside the method to generate docs for"
 (global-set-key (kbd "C-c x f") 'clang-format-region)
 (global-set-key (kbd "C-c x F") 'clang-format-buffer)
 
-(setq-default c-default-style "bsd")
+(defun c-set-c-style ()
+  (interactive)
+  (c-set-style "bsd")
+  (setq c-default-style "bsd")
+  (setq indent-tabs-mode t)
+  (setq tab-width 4)
+  (setq c-basic-offset 4)
+  (add-to-list 'c-hanging-braces-alist '(substatement-open before after)))
 
 (add-hook 'c-mode-common-hook '(lambda () (c-toggle-hungry-state 1) (c-toggle-auto-newline 1) (c-set-style "bsd")))
+(add-hook 'c++-mode-hook '(lambda () (c-set-c-style)))
+(add-hook 'c-mode-hook '(lambda () (c-set-c-style)))
 
 ;; yasnippet and smartparens
 (add-hook 'python-mode-hook 'yas-minor-mode)

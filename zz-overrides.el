@@ -1,5 +1,5 @@
-;; (setq-default c-default-style "bsd"
-;;               c-basic-offset 4)
+(setq-default c-default-style "bsd"
+              c-basic-offset 4)
 (setq-default indent-tabs-mode t)
 (setq-default tab-width 4)
 ;; (setq whitespace-line-column 120)
