@@ -1186,7 +1186,10 @@ Also clean up whitespace in before-save-hook.
     (show-paren-mode 1)
     (electric-pair-mode 1))
 
-  (add-hook 'c-mode-common-hook 'disable-smartparens)
+  (add-hook 'c++-mode-hook 'disable-smartparens)
+  (add-hook 'c-mode-hook 'disable-smartparens)
+  (add-hook 'js-mode-hook #'smartparens-mode)
+  (add-hook 'python-mode-hook #'smartparens-mode)
 #+END_SRC
 *** expand-region
 #+BEGIN_SRC emacs-lisp
