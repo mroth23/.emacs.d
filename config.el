@@ -555,9 +555,6 @@
   (setq company-tooltip-align-lsp-annotations t)
   (setq company-tooltip-flip-when-above t))
 
-;; (add-to-list 'company-backends 'company-dabbrev-code)
-;; (add-to-list 'company-backends 'company-files)
-
 ;; dotenv-mode
 (use-package dotenv-mode
   :config
