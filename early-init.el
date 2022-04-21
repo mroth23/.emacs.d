@@ -9,7 +9,6 @@
                          ("ublt" . "https://elpa.ubolonton.org/packages/")
                          ("melpa" . "https://melpa.org/packages/")))
 
-(setq package-enable-at-startup nil)
 (setq package-quickstart t)
 
 (setq frame-inhibit-implied-resize t)

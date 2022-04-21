@@ -551,13 +551,11 @@
   (setq company-minimum-prefix-length 1)
   (setq company-idle-delay 0.0)
   (setq company-tooltip-limit 15)
-  (setq company-backends (delete 'company-semantic company-backends))
+  (setq company-backends '((:separate company-yasnippet company-capf company-keywords company-dabbrev-code)))
   (setq company-tooltip-align-lsp-annotations t)
-  (setq company-tooltip-flip-when-above t)
-  (add-to-list 'company-backends 'company-dabbrev))
+  (setq company-tooltip-flip-when-above t))
 
 ;; (add-to-list 'company-backends 'company-dabbrev-code)
-;; (add-to-list 'company-backends 'company-yasnippet)
 ;; (add-to-list 'company-backends 'company-files)
 
 ;; dotenv-mode
@@ -574,13 +572,27 @@
 ;; Swiper do-what-I-mean
 ;; When text is marked, search for that.
 ;; When nothing is marked, search for input.
+;; Source: https://xenodium.com/emacs-dwim-swiper-vs-isearch-vs-phi-search/
 (defun swiper-dwim ()
   "Use current region if active for swiper search"
   (interactive)
-  (if (not (use-region-p))
-      (swiper)
-    (deactivate-mark)
-    (swiper (format "%s" (buffer-substring (region-beginning) (region-end))))))
+  (cond ((and (boundp 'multiple-cursors-mode)
+              multiple-cursors-mode
+              (fboundp  'phi-search))
+         (call-interactively 'phi-search))
+        ;; Are we defining a macro?
+        (defining-kbd-macro
+          (call-interactively 'isearch-forward))
+        ;; Fall back to swiper.
+        (t
+         ;; Wrap around swiper results.
+         (let ((ivy-wrap t))
+           ;; If region is active, prepopulate swiper's search term.
+           (if (and transient-mark-mode mark-active (not (eq (mark) (point))))
+               (let ((region (buffer-substring-no-properties (mark) (point))))
+                 (deactivate-mark)
+                 (swiper-isearch region))
+             (swiper-isearch))))))
 
 (global-set-key (kbd "C-s") 'swiper-dwim)
 
@@ -609,7 +621,7 @@
   (setq helm-command-prefix-key "C-c h")
   (require 'helm-config)
   :config
-  (helm-mode 1)
+  ;; (helm-mode 1)
   ;; Fuzzy matching everywhere
   (setq helm-completion-style 'emacs
         completion-styles     '(flex))
@@ -667,13 +679,13 @@
   :bind
   ;; Map C-c p s r to search with ripgrep, but using helm-ag interface
   (:map projectile-command-map
-   ("s r" . (lambda ()
-              (interactive)
-              (setq helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline --glob-case-insensitive")
-              (setq helm-ag-success-exit-status '(0 2))
-              (helm-projectile-ag)
-              (setq helm-ag-base-command "ag -U --vimgrep")
-              (setq helm-ag-success-exit-status nil)))))
+        ("s r" . (lambda ()
+                   (interactive)
+                   (setq helm-ag-base-command "rg --column --no-heading --pcre2 --smart-case --multiline --glob-case-insensitive")
+                   (setq helm-ag-success-exit-status '(0 2))
+                   (helm-projectile-ag)
+                   (setq helm-ag-base-command "ag -U --vimgrep")
+                   (setq helm-ag-success-exit-status nil)))))
 
 (use-package dot-mode
   :config
@@ -976,7 +988,7 @@ The point should be inside the method to generate docs for"
     flycheck-command-map))
 
 (use-package helm-lsp
-  :commands helm-lsp-workspace-symbol helm-lsp-code-actions)
+  :commands helm-lsp-workspace-symbol helm-lsp-global-workspace-symbol helm-lsp-code-actions)
 
 (use-package lsp-mode
   :demand t
@@ -989,6 +1001,7 @@ The point should be inside the method to generate docs for"
   :bind
   (:map lsp-mode-map
         ("M-/"     . helm-lsp-code-actions)
+        ("C-c l s" . lsp-ivy-global-workspace-symbol)
         ("C-c l j" . moo-javadoc)
         ("C-c l o" . lsp-organize-imports)
         ("C-c l r" . lsp-rename)
@@ -1017,6 +1030,7 @@ The point should be inside the method to generate docs for"
   (lsp-headerline-breadcrumb-enable-diagnostics nil)
   (lsp-headerline-breadcrumb-segments '(project file symbols))
   :config
+  (require 'lsp-lens)
   (require 'lsp-modeline)
   (require 'lsp-completion)
   (require 'lsp-diagnostics)
@@ -1200,7 +1214,7 @@ The point should be inside the method to generate docs for"
   (setq c-basic-offset 4)
   (add-to-list 'c-hanging-braces-alist '(substatement-open before after)))
 
-(defvar checkstyle-jar (expand-file-name "~/.emacs.d/external/checkstyle-8.33-all.jar"))
+(defvar checkstyle-jar (expand-file-name "~/.emacs.d/external/checkstyle-10.1-all.jar"))
 (defvar checkstyle-cfg (expand-file-name "~/.emacs.d/external/checkstyle.xml"))
 
 (flycheck-define-checker checkstyle-java
@@ -1210,7 +1224,7 @@ The point should be inside the method to generate docs for"
   :enable t
   :modes (java-mode))
 
-(add-to-list 'flycheck-checkers 'checkstyle-java)
+;; (add-to-list 'flycheck-checkers 'checkstyle-java)
 
 (use-package sqlup-mode
   :hook
@@ -1278,6 +1292,13 @@ The point should be inside the method to generate docs for"
    (typescript-mode . tide-hl-identifier-mode)
    (before-save . tide-format-before-save)))
 
+(defun setup-nxml-mode ()
+  (interactive)
+  (setq indent-tabs-mode t)
+  (setq nxml-child-indent 4 nxml-attribute-indent 4))
+
+(add-hook 'nxml-mode-hook '(lambda () (setup-nxml-mode)))
+
 ;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
 (defun my/tangle-dotfiles ()
   "If the current file is this file, the code blocks are tangled"
@@ -1298,7 +1319,6 @@ The point should be inside the method to generate docs for"
   :config
   (add-to-list 'org-structure-template-alist
                '("el" . "src emacs-lisp"))
-  (require 'org-tempo)
   (setq org-src-fontify-natively t
         org-src-tab-acts-natively t
         org-confirm-babel-evaluate nil

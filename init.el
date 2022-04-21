@@ -34,9 +34,7 @@
   "Path to .emacs.d, should be located in ~.")
 
 (setq package-user-dir (format "%selpa/" user-emacs-directory))
-(setq load-prefer-newer t ;; use newest version of file
-      ;; Ask package.el to not add (package-initialize) to .emacs
-      package--init-file-ensured t)
+(setq load-prefer-newer t) ;; use newest version of file
 ;; make the package directory
 (unless (file-directory-p package-user-dir)
   (make-directory package-user-dir t))
