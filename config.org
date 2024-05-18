@@ -314,22 +314,22 @@ Things that don't seem to fit anywhere else.
   (use-package crux
     :demand t
     :bind
-    ("C-c TAB" . crux-indent-rigidly-and-copy-to-clipboard)
-    ("s-k" . crux-kill-whole-line)
-    ("s-j" . crux-top-join-line)
-    ("C-c o" . crux-open-with)
-    ("C-a" . crux-move-beginning-of-line)
-    ("M-o" . crux-smart-open-line)
-    ("s-o" . crux-smart-open-line-above)
-    ("C-c f" . crux-recentf-find-file)
-    ("C-c n" . crux-cleanup-buffer-or-region)
-    ("C-c s" . crux-swap-windows)
-    ("C-c D" . crux-delete-file-and-buffer)
-    ("C-c d" . crux-duplicate-current-line-or-region)
-    ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
-    ("C-c r" . crux-rename-buffer-and-file)
-    ("C-c k" . crux-kill-other-buffers)
-    ("C-c t" . crux-visit-term-buffer))
+    (("C-c TAB" . crux-indent-rigidly-and-copy-to-clipboard)
+     ("s-k" . crux-kill-whole-line)
+     ("s-j" . crux-top-join-line)
+     ("C-c o" . crux-open-with)
+     ("C-a" . crux-move-beginning-of-line)
+     ("M-o" . crux-smart-open-line)
+     ("s-o" . crux-smart-open-line-above)
+     ("C-c f" . crux-recentf-find-file)
+     ("C-c n" . crux-cleanup-buffer-or-region)
+     ("C-c s" . crux-swap-windows)
+     ("C-c D" . crux-delete-file-and-buffer)
+     ("C-c d" . crux-duplicate-current-line-or-region)
+     ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
+     ("C-c r" . crux-rename-buffer-and-file)
+     ("C-c k" . crux-kill-other-buffers)
+     ("C-c t" . crux-visit-term-buffer)))
 #+END_SRC
 ** Dashboard
 #+BEGIN_SRC emacs-lisp
@@ -1184,7 +1184,9 @@ Also clean up whitespace in before-save-hook.
     (setq sp-autoskip-closing-pair 'always)
     (setq sp-hybrid-kill-entire-symbol nil)
     (sp-use-paredit-bindings)
-    (show-smartparens-global-mode +1))
+    (show-smartparens-global-mode +1)
+    :hook
+    (python-mode . smartparens-mode))
 
   ;; I never got smartparens to work properly with cc-mode (formatting etc). So I use the builtins instead, which work nicely.
   (defun disable-smartparens ()
@@ -1407,16 +1409,14 @@ I use lsp-mode for language-server-protocol support.
 #+END_SRC
 ** Python
 #+BEGIN_SRC emacs-lisp
-  ;; yasnippet and smartparens
-  (add-hook 'python-mode-hook 'yas-minor-mode)
-  (add-hook 'python-mode-hook 'smartparens-mode)
-
-  (use-package lsp-python-ms
+  (use-package lsp-pyright
     :init (setq lsp-python-ms-auto-install-server t)
     :hook (python-mode . (lambda ()
                            (setq-default tab-width 4)
-                           (require 'lsp-python-ms)
+                           (require 'lsp-pyright)
                            (lsp))))
+  (use-package yaml-mode
+    :init (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
 
   ;; virtualenvwrapper
   (use-package virtualenvwrapper
