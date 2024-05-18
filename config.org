@@ -1562,6 +1562,8 @@ I use lsp-mode for language-server-protocol support.
     (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
     (add-to-list 'auto-mode-alist '("/\\(views\\|html\\|theme\\|templates\\)/.*\\.php\\'" . web-mode)))
 
+  (use-package typescript-mode)
+
   (defun setup-tide-mode ()
       (interactive)
       (tide-setup)
