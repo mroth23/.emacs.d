@@ -810,6 +810,7 @@ Use mood-line.
   (global-set-key (kbd "C-s") 'swiper-dwim)
 
   (use-package helm
+    :straight t
     :demand t
     :bind
     (("C-h SPC" . helm-all-mark-rings)
@@ -984,12 +985,14 @@ Extra magit settings. I refresh the magit buffer on file save because it's
 annoying to do so manually. Also, use forge for GitHub integration in Magit.
 #+BEGIN_SRC emacs-lisp
   (use-package magit
+    :straight
     :commands
     (magit-status magit-dispatch magit-inside-worktree-p magit-after-save-refresh-status)
     :bind
     (("C-x g"   . magit-status)
      ("C-x M-g" . magit-dispatch))
     :config
+    (require 'magit-extras)
     (define-key magit-status-mode-map (kbd "Q") 'magit-toggle-whitespace))
 
   (add-hook 'prog-mode-hook
@@ -1302,6 +1305,7 @@ I use lsp-mode for language-server-protocol support.
     (require 'lsp-completion)
     (require 'lsp-diagnostics)
     (require 'lsp-headerline)
+    (require 'lsp-lens)
     (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))
 
   (use-package lsp-treemacs
