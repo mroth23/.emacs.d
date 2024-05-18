@@ -271,7 +271,7 @@ Things that don't seem to fit anywhere else.
   (size-indication-mode t)
 #+END_SRC
 *** Outline Minor Mode
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp
   ;; (use-package outline
   ;;   :ensure nil ; built-in
   ;;   :hook
@@ -297,7 +297,7 @@ Things that don't seem to fit anywhere else.
   ;;                        (group (group (* space)) bow (or "class" "def") eow)
   ;;                        ;; Decorators
   ;;                        (group (group (* space)) "@"))))))
-#+end_src
+#+END_SRC
 ** Performance
 #+BEGIN_SRC emacs-lisp
   ;; Instead of setting gc-cons-threshold, use gcmh.
@@ -313,6 +313,8 @@ Things that don't seem to fit anywhere else.
 #+BEGIN_SRC emacs-lisp
   (use-package crux
     :demand t
+    :init
+    (require 'bind-key)
     :bind
     (("C-c TAB" . crux-indent-rigidly-and-copy-to-clipboard)
      ("s-k" . crux-kill-whole-line)
@@ -665,7 +667,7 @@ A few useful global keybinds for functions I use occasionally.
 #+END_SRC
 *** end-line-with
 Like crux-smart-open-line, but end the current line with a delimiter (e.g. ;) first.
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp
   (defun end-line-with-semicolon ()
     (interactive)
     (move-end-of-line nil)
@@ -673,7 +675,7 @@ Like crux-smart-open-line, but end the current line with a delimiter (e.g. ;) fi
     (crux-smart-open-line nil))
 
   (global-set-key (kbd "C-;") 'end-line-with-semicolon)
-#+end_src
+#+END_SRC
 ** avy
 #+BEGIN_SRC emacs-lisp
   (use-package avy
@@ -833,7 +835,6 @@ Use mood-line.
     (("C-r"     . helm-resume))
     :init
     (setq helm-command-prefix-key "C-c h")
-    (require 'helm-config)
     :config
     ;; (helm-mode 1)
     ;; Fuzzy matching everywhere
@@ -1346,7 +1347,7 @@ I use lsp-mode for language-server-protocol support.
     (lsp-after-open . lsp-origami-try-enable))
 #+END_SRC
 ** Tree-sitter
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp
   ;; (use-package tree-sitter
   ;;   :hook
   ;;   (tree-sitter-after-on . tree-sitter-hl-mode)
@@ -1354,7 +1355,7 @@ I use lsp-mode for language-server-protocol support.
   ;;   (global-tree-sitter-mode t))
 
   ;; (use-package tree-sitter-langs)
-#+end_src
+#+END_SRC
 ** C/C++
 #+BEGIN_SRC emacs-lisp
   ;; Some C/C++ settings
@@ -1410,13 +1411,17 @@ I use lsp-mode for language-server-protocol support.
 ** Python
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-pyright
-    :init (setq lsp-python-ms-auto-install-server t)
-    :hook (python-mode . (lambda ()
+    :init
+    (setq lsp-python-ms-auto-install-server t)
+    :hook
+    (python-mode . (lambda ()
                            (setq-default tab-width 4)
                            (require 'lsp-pyright)
                            (lsp))))
+
   (use-package yaml-mode
-    :init (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
+    :init
+    (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
 
   ;; virtualenvwrapper
   (use-package virtualenvwrapper
@@ -1548,7 +1553,7 @@ I use lsp-mode for language-server-protocol support.
   (define-key helm-command-map (kbd "d") 'helm-sql-connect-server)
 #+END_SRC
 ** Web
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp
   (use-package web-mode
     :config
     (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
@@ -1578,21 +1583,22 @@ I use lsp-mode for language-server-protocol support.
     ((typescript-mode . setup-tide-mode)
      (typescript-mode . tide-hl-identifier-mode)
      (before-save . tide-format-before-save)))
-#+end_src
+#+END_SRC
 ** XML
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp
   (defun setup-nxml-mode ()
     (interactive)
     (setq indent-tabs-mode t)
     (setq nxml-child-indent 4 nxml-attribute-indent 4))
 
   (add-hook 'nxml-mode-hook '(lambda () (setup-nxml-mode)))
+#+END_SRC
 ** Go
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp
     (use-package go-mode)
     (use-package company-go)
     (use-package go-projectile)
-#+end_src
+#+END_SRC
 * Org Config setup
 #+BEGIN_SRC emacs-lisp
   ;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h

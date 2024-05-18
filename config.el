@@ -1,4 +1,5 @@
 (when (eq system-type 'darwin) ;; mac specific settings
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
   (setq mac-option-modifier 'meta)
   ;; (setq mac-right-option-modifier 'none)
   (setq mac-command-modifier 'super)
@@ -6,6 +7,7 @@
   (global-set-key [kp-delete] 'delete-char)
   ;; For some reason lockfiles break python anaconda-mode's autocomplete
   (setq create-lockfiles nil)
+  (setq scroll-step 1)
   (menu-bar-mode +1)
   ;; Enable emoji, and stop the UI from freezing when trying to display them.
   (when (fboundp 'set-fontset-font)
@@ -160,23 +162,25 @@
 
 (use-package crux
   :demand t
+  :init
+  (require 'bind-key)
   :bind
-  ("C-c TAB" . crux-indent-rigidly-and-copy-to-clipboard)
-  ("s-k" . crux-kill-whole-line)
-  ("s-j" . crux-top-join-line)
-  ("C-c o" . crux-open-with)
-  ("C-a" . crux-move-beginning-of-line)
-  ("M-o" . crux-smart-open-line)
-  ("s-o" . crux-smart-open-line-above)
-  ("C-c f" . crux-recentf-find-file)
-  ("C-c n" . crux-cleanup-buffer-or-region)
-  ("C-c s" . crux-swap-windows)
-  ("C-c D" . crux-delete-file-and-buffer)
-  ("C-c d" . crux-duplicate-current-line-or-region)
-  ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
-  ("C-c r" . crux-rename-buffer-and-file)
-  ("C-c k" . crux-kill-other-buffers)
-  ("C-c t" . crux-visit-term-buffer))
+  (("C-c TAB" . crux-indent-rigidly-and-copy-to-clipboard)
+   ("s-k" . crux-kill-whole-line)
+   ("s-j" . crux-top-join-line)
+   ("C-c o" . crux-open-with)
+   ("C-a" . crux-move-beginning-of-line)
+   ("M-o" . crux-smart-open-line)
+   ("s-o" . crux-smart-open-line-above)
+   ("C-c f" . crux-recentf-find-file)
+   ("C-c n" . crux-cleanup-buffer-or-region)
+   ("C-c s" . crux-swap-windows)
+   ("C-c D" . crux-delete-file-and-buffer)
+   ("C-c d" . crux-duplicate-current-line-or-region)
+   ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
+   ("C-c r" . crux-rename-buffer-and-file)
+   ("C-c k" . crux-kill-other-buffers)
+   ("C-c t" . crux-visit-term-buffer)))
 
 (use-package page-break-lines)
 
@@ -594,6 +598,7 @@
 (global-set-key (kbd "C-s") 'swiper-dwim)
 
 (use-package helm
+  :straight t
   :demand t
   :bind
   (("C-h SPC" . helm-all-mark-rings)
@@ -616,7 +621,6 @@
   (("C-r"     . helm-resume))
   :init
   (setq helm-command-prefix-key "C-c h")
-  (require 'helm-config)
   :config
   ;; (helm-mode 1)
   ;; Fuzzy matching everywhere
@@ -756,12 +760,14 @@ The point should be inside the method to generate docs for"
       (aya-expand))))
 
 (use-package magit
+  :straight
   :commands
   (magit-status magit-dispatch magit-inside-worktree-p magit-after-save-refresh-status)
   :bind
   (("C-x g"   . magit-status)
    ("C-x M-g" . magit-dispatch))
   :config
+  (require 'magit-extras)
   (define-key magit-status-mode-map (kbd "Q") 'magit-toggle-whitespace))
 
 (add-hook 'prog-mode-hook
@@ -931,7 +937,9 @@ The point should be inside the method to generate docs for"
   (setq sp-autoskip-closing-pair 'always)
   (setq sp-hybrid-kill-entire-symbol nil)
   (sp-use-paredit-bindings)
-  (show-smartparens-global-mode +1))
+  (show-smartparens-global-mode +1)
+  :hook
+  (python-mode . smartparens-mode))
 
 ;; I never got smartparens to work properly with cc-mode (formatting etc). So I use the builtins instead, which work nicely.
 (defun disable-smartparens ()
@@ -939,7 +947,11 @@ The point should be inside the method to generate docs for"
   (show-paren-mode 1)
   (electric-pair-mode 1))
 
-(add-hook 'c-mode-common-hook 'disable-smartparens)
+(add-hook 'c++-mode-hook 'disable-smartparens)
+(add-hook 'c-mode-hook 'disable-smartparens)
+(add-hook 'js-mode-hook #'smartparens-mode)
+(add-hook 'python-mode-hook #'smartparens-mode)
+(add-hook 'web-mode-hook #'smartparens-mode)
 
 (use-package expand-region
   :config)
@@ -1032,6 +1044,7 @@ The point should be inside the method to generate docs for"
   (require 'lsp-completion)
   (require 'lsp-diagnostics)
   (require 'lsp-headerline)
+  (require 'lsp-lens)
   (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))
 
 (use-package lsp-treemacs
@@ -1127,16 +1140,18 @@ The point should be inside the method to generate docs for"
 (add-hook 'c++-mode-hook '(lambda () (c-set-c-style)))
 (add-hook 'c-mode-hook '(lambda () (c-set-c-style)))
 
-;; yasnippet and smartparens
-(add-hook 'python-mode-hook 'yas-minor-mode)
-(add-hook 'python-mode-hook 'smartparens-mode)
-
-(use-package lsp-python-ms
-  :init (setq lsp-python-ms-auto-install-server t)
-  :hook (python-mode . (lambda ()
+(use-package lsp-pyright
+  :init
+  (setq lsp-python-ms-auto-install-server t)
+  :hook
+  (python-mode . (lambda ()
                          (setq-default tab-width 4)
-                         (require 'lsp-python-ms)
+                         (require 'lsp-pyright)
                          (lsp))))
+
+(use-package yaml-mode
+  :init
+  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
 
 ;; virtualenvwrapper
 (use-package virtualenvwrapper
@@ -1206,7 +1221,7 @@ The point should be inside the method to generate docs for"
   (interactive)
   (c-set-style "bsd")
   (setq c-default-style "bsd")
-  (setq indent-tabs-mode t)
+  (setq indent-tabs-mode nil)
   (setq tab-width 4)
   (setq c-basic-offset 4)
   (add-to-list 'c-hanging-braces-alist '(substatement-open before after)))
@@ -1274,6 +1289,8 @@ The point should be inside the method to generate docs for"
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("/\\(views\\|html\\|theme\\|templates\\)/.*\\.php\\'" . web-mode)))
 
+(use-package typescript-mode)
+
 (defun setup-tide-mode ()
     (interactive)
     (tide-setup)
@@ -1295,6 +1312,10 @@ The point should be inside the method to generate docs for"
   (setq nxml-child-indent 4 nxml-attribute-indent 4))
 
 (add-hook 'nxml-mode-hook '(lambda () (setup-nxml-mode)))
+
+(use-package go-mode)
+(use-package company-go)
+(use-package go-projectile)
 
 ;; https://emacs.stackexchange.com/questions/29214/org-based-init-method-slows-down-emacs-startup-dramaticlly-6-minute-startup-h
 (defun my/tangle-dotfiles ()
