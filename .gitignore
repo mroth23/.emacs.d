@@ -17,3 +17,7 @@ package-quickstart.el
 /data/
 /elpa/
 /server/
+/straight/
+
+async-bytecomp.log
+projectile-bookmarks.eld

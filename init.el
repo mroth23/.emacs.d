@@ -82,6 +82,8 @@
         `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
   (setq custom-file (expand-file-name "custom.el" user-emacs-directory)))
 
+(no-littering-theme-backups)
+
 (setq package-check-signature 'allow-unsigned)
 
 ;; This is the actual config file. It is omitted if it doesn't exist so emacs won't refuse to launch.
