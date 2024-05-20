@@ -23,3 +23,5 @@
   (setq command-line-ns-option-alist nil))
 (unless (eq system-type 'gnu/linux)
   (setq command-line-x-option-alist nil))
+
+(setenv "LSP_USE_PLISTS" "true")

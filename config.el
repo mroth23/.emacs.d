@@ -552,10 +552,10 @@
   :hook
   (prog-mode . company-mode)
   :config
-  (setq company-minimum-prefix-length 1)
+  (setq company-minimum-prefix-length 2)
   (setq company-idle-delay 0.0)
   (setq company-tooltip-limit 15)
-  (setq company-backends '((:separate company-yasnippet company-capf company-keywords company-dabbrev-code)))
+  (setq company-backends '((:separate company-yasnippet company-capf company-keywords)))
   (setq company-tooltip-align-lsp-annotations t)
   (setq company-tooltip-flip-when-above t))
 
@@ -1005,7 +1005,8 @@ The point should be inside the method to generate docs for"
   ((c++-mode
     c-mode
     objc-mode
-    java-mode) . lsp)
+    java-mode
+    sh-mode) . lsp)
   :commands (lsp lsp-deferred)
   :bind
   (:map lsp-mode-map
@@ -1018,7 +1019,7 @@ The point should be inside the method to generate docs for"
         ("C-c l d" . lsp-describe-thing-at-point)
         ("C-c l h" . lsp-treemacs-call-hierarchy))
   :init
-  (setq read-process-output-max (* 1024 1024))
+  (setq read-process-output-max (* 1024 1024 5))
   :custom
   (lsp-checker-enable t)
   (lsp-keymap-prefix "C-c l")
@@ -1045,6 +1046,8 @@ The point should be inside the method to generate docs for"
   (require 'lsp-diagnostics)
   (require 'lsp-headerline)
   (require 'lsp-lens)
+  (setq lsp-idle-delay 0.250)
+  (setq lsp-log-io nil)
   (setq-local gcmh-high-cons-threshold (* 2 gcmh-high-cons-threshold)))
 
 (use-package lsp-treemacs
